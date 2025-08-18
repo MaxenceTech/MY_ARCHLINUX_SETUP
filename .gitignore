@@ -23,5 +23,6 @@ Thumbs.db
 # AUR build directories  
 /aur-stockage/
 
-# Test files
+# Test and validation files
 test_*
+validate.sh

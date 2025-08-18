@@ -230,7 +230,7 @@ cat /archinstall/CONFIG/.zshrc > ~/.zshrc
 cat /archinstall/CONFIG/.p10k.zsh > ~/.p10k.zsh
 
 # Nano Color + tricks
-sudo tee /etc/nanorc < /archinstall/CONFIG/nanorc
+sudo cat /archinstall/CONFIG/nanorc | sudo tee /etc/nanorc > /dev/null
 
 # Fix group
 sudo usermod -a -G sys "$USER"
