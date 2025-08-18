@@ -303,6 +303,13 @@ WantedBy=network.target" | sudo tee /etc/systemd/system/nvidia-oc.service
 
 sudo systemctl enable nvidia-oc.service 
 
+# /data permission
+sudo groupadd datausers
+sudo usermod -aG datausers $USER
+sudo chown root:datausers /data
+sudo chmod 775 /data
+sudo chmod g+s /data
+
 # Fix lid
 
 varlidline=$(sudo grep -n '#HoldoffTimeoutSec' /etc/systemd/logind.conf)
