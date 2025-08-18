@@ -4,17 +4,17 @@
 set -euo pipefail
 
 pacmanerror=0
-# Update system first
 pacman -Syu --noconfirm
 pacmanerror=$((pacmanerror + $?))
 
-# Base system packages (grouped)
+# Base system packages
 pacman -S nano base-devel openssh networkmanager wpa_supplicant wireless_tools \
     netctl dialog iputils man git --noconfirm
 pacmanerror=$((pacmanerror + $?))
 
 # Enable NetworkManager
 systemctl enable NetworkManager
+
 mv /archinstall/SCRIPT/aurinstall.sh /usr/local/bin/aurinstall
 mv /archinstall/SCRIPT/mkinitcpio-editor.sh /usr/local/bin/mkinitcpio-editor
 sed -i 's/^#\(fr_FR.UTF-8\s*UTF-8\)/\1/' /etc/locale.gen
@@ -64,7 +64,7 @@ vm.vfs_cache_pressure=50" | tee /etc/sysctl.d/99-ramtweaks.conf
 mkinitcpio-editor -a xe lz4
 pacman -S efibootmgr intel-ucode --noconfirm
 pacmanerror=$((pacmanerror + $?))
-PARTUUIDGREP=$(grep "/ " /etc/fstab | cut -f 1 -d " ")
+PARTUUIDGREP=$(awk '$2 == "/" {print $1}' /etc/fstab)
 bootctl install
 echo "default  arch.conf
 timeout  6
