@@ -1,0 +1,573 @@
+#!/bin/bash
+x=10
+ping -c 5 google.com
+if [ $? = "0" ]; then
+    x=0
+fi
+while [ $x != 0 ]
+do
+	sudo nmcli device wifi list
+    echo -e "\n\n\n\nSSID :"
+    read SSID
+    echo "Password :"
+    read PASSWORD
+    sudo nmcli device wifi connect "$SSID" password "$PASSWORD"
+    t=$?
+    sleep 10
+    ping -c 5 google.com 
+    x=$?
+    if [ $t != 0 ]; then
+        echo -e "\n\n\nNot connected !\n\n\n"
+    elif [ $x != 0 ]; then
+        echo -e "\n\n\nConnected but no network !\n\n\n"
+    fi
+done
+
+
+sudo timedatectl set-timezone Europe/Paris
+sudo systemctl enable systemd-timesyncd
+x=10
+
+while [ $x != 0 ]
+do
+    echo "Nom Machine :"
+    read hostnamevar
+    sudo hostnamectl set-hostname $hostnamevar
+    x=$?
+done
+
+echo "127.0.0.1 localhost
+::1 localhost
+127.0.1.1 $hostnamevar" | sudo tee -a /etc/hosts
+
+pacmanerror=0
+sudo pacman -Syu --noconfirm
+pacmanerror=$((pacmanerror + $?))
+
+#Yay
+aurinstall yay --noconfirm --skippgpcheck
+yay -Syu --noconfirm
+
+
+yayerror=0
+
+# Wayland
+
+sudo pacman -S wayland lib32-wayland wayland-protocols --noconfirm
+pacmanerror=$((pacmanerror + $?))
+
+# xorg
+
+sudo pacman -S xorg-server xorg-apps xorg-xwayland xorg-xlsclients --noconfirm
+pacmanerror=$((pacmanerror + $?))
+
+# Intel
+
+sudo pacman -S mesa lib32-mesa mesa-utils intel-media-driver libva-utils --noconfirm
+pacmanerror=$((pacmanerror + $?))
+sudo pacman -S vulkan-icd-loader lib32-vulkan-icd-loader vulkan-intel lib32-vulkan-intel vulkan-mesa-layers lib32-vulkan-mesa-layers --noconfirm
+pacmanerror=$((pacmanerror + $?))
+
+#NVIDIA
+
+sudo pacman -S nvidia-open nvidia-utils lib32-nvidia-utils nvidia-settings libxnvctrl nvidia-prime --noconfirm
+pacmanerror=$((pacmanerror + $?))
+
+echo '# Enable runtime PM for NVIDIA VGA/3D controller devices on adding device
+ACTION=="add", SUBSYSTEM=="pci", ATTR{vendor}=="0x10de", ATTR{class}=="0x030000", TEST=="power/control", ATTR{power/control}="auto"
+ACTION=="add", SUBSYSTEM=="pci", ATTR{vendor}=="0x10de", ATTR{class}=="0x030200", TEST=="power/control", ATTR{power/control}="auto"
+
+# Enable runtime PM for NVIDIA VGA/3D controller devices on driver bind
+ACTION=="bind", SUBSYSTEM=="pci", ATTR{vendor}=="0x10de", ATTR{class}=="0x030000", TEST=="power/control", ATTR{power/control}="auto"
+ACTION=="bind", SUBSYSTEM=="pci", ATTR{vendor}=="0x10de", ATTR{class}=="0x030200", TEST=="power/control", ATTR{power/control}="auto"
+
+# Disable runtime PM for NVIDIA VGA/3D controller devices on driver unbind
+ACTION=="unbind", SUBSYSTEM=="pci", ATTR{vendor}=="0x10de", ATTR{class}=="0x030000", TEST=="power/control", ATTR{power/control}="on"
+ACTION=="unbind", SUBSYSTEM=="pci", ATTR{vendor}=="0x10de", ATTR{class}=="0x030200", TEST=="power/control", ATTR{power/control}="on"' | sudo tee /etc/udev/rules.d/90-prime-powermanagement.rules
+
+echo 'options nvidia "NVreg_DynamicPowerManagement=0x03" NVreg_UsePageAttributeTable=1' | sudo tee /etc/modprobe.d/nvidia.conf
+
+sudo systemctl enable nvidia-powerd.service
+
+# Dbus
+
+sudo pacman -S dbus --noconfirm
+pacmanerror=$((pacmanerror + $?))
+
+# bluetooth
+
+sudo pacman -S bluez bluez-utils --noconfirm
+pacmanerror=$((pacmanerror + $?))
+sudo systemctl enable bluetooth.service
+
+# Son
+
+sudo pacman -S alsa-utils alsa-plugins alsa-firmware sof-firmware alsa-ucm-conf --noconfirm
+pacmanerror=$((pacmanerror + $?))
+sudo pacman -S pipewire lib32-pipewire wireplumber pipewire-alsa pipewire-pulse pamixer pipewire-jack lib32-pipewire-jack --noconfirm
+pacmanerror=$((pacmanerror + $?))
+sudo usermod -a -G audio $USER
+echo "high-priority = yes
+nice-level = -11
+
+realtime-scheduling = yes
+realtime-priority = 5" | sudo tee /etc/pulse/daemon.conf
+
+# Imprimante
+
+sudo pacman -S cups cups-pdf avahi nss-mdns ghostscript gsfonts foomatic-db-engine foomatic-db foomatic-db-ppds gutenprint foomatic-db-gutenprint-ppds usbutils --noconfirm
+pacmanerror=$((pacmanerror + $?))
+
+sudo systemctl enable avahi-daemon.service
+
+sudo sed -i 's/resolve/mdns_minimal [NOTFOUND=return] resolve/g' /etc/nsswitch.conf
+
+sudo systemctl enable cups.socket
+
+# Gnome
+
+sudo pacman -S dmidecode gnome gnome-tweaks gnome-shell-extensions xdg-desktop-portal xdg-desktop-portal-gnome power-profiles-daemon gnome-themes-standard --noconfirm
+pacmanerror=$((pacmanerror + $?))
+yay -S ttf-firacode ttf-dejavu reversal-icon-theme-git --noconfirm
+yayerror=$((yayerror + $?))
+
+sudo systemctl enable gdm.service
+
+#MSI-EC
+yay -S msi-ec-dkms-git --noconfirm
+yayerror=$((yayerror + $?))
+
+sudo mkinitcpio-editor -a msi-ec
+
+#Gnome-randr
+yay -S gnome-randr-rust --noconfirm
+yayerror=$((yayerror + $?))
+
+
+#acpid
+sudo pacman -S acpid --noconfirm
+pacmanerror=$((pacmanerror + $?))
+sudo cp -r /archinstall/SCRIPT/ACPID/* /etc/acpi
+sudo systemctl enable --now acpid.service
+
+# QEMU + KVM
+
+echo "softdep nvidia pre: vfio-pci" | sudo tee /etc/modprobe.d/vfio.conf
+sudo pacman -S qemu-full qemu-img libvirt virt-install virt-manager virt-viewer edk2-ovmf dnsmasq swtpm guestfs-tools libosinfo --noconfirm
+pacmanerror=$((pacmanerror + $?))
+sudo mkinitcpio-editor -a kvm kvm_intel virtio virtio_blk virtio_pci virtio_net vfio_iommu_type1
+sudo systemctl enable libvirtd.service
+echo "options kvm_intel nested=1" | sudo tee /etc/modprobe.d/kvm-intel.conf
+sudo usermod -aG libvirt $USER
+echo 'export LIBVIRT_DEFAULT_URI="qemu:///system"' >> ~/.bashrc
+echo 'export LIBVIRT_DEFAULT_URI="qemu:///system"' >> ~/.zshrc 
+sudo setfacl -R -b /var/lib/libvirt/images/
+sudo setfacl -R -m "u:${USER}:rwX" /var/lib/libvirt/images/
+sudo setfacl -m "d:u:${USER}:rwx" /var/lib/libvirt/images/
+
+# Fix keyboard layout
+sudo localectl set-x11-keymap fr
+
+# Java
+sudo pacman -S java-runtime-common jre-openjdk --noconfirm
+pacmanerror=$((pacmanerror + $?))
+
+# Pare-feu
+
+sudo pacman -S firewalld --noconfirm
+pacmanerror=$((pacmanerror + $?))
+sudo systemctl enable firewalld.service 
+
+# SSD Optimisation
+
+sudo pacman -S util-linux --noconfirm
+pacmanerror=$((pacmanerror + $?))
+
+sudo systemctl enable fstrim.timer
+
+
+# Applications utiles
+
+sudo pacman -S speech-dispatcher libreoffice-still-fr file-roller zip unzip p7zip unrar python-pip tk gimp bolt hunspell-fr noto-fonts-emoji --noconfirm
+pacmanerror=$((pacmanerror + $?))
+yay -S vscodium-bin --noconfirm
+yayerror=$((yayerror + $?))
+
+yay -S librewolf-bin --noconfirm
+yayerror=$((yayerror + $?))
+
+yay -S mullvad-vpn-bin qbittorrent --noconfirm
+yayerror=$((yayerror + $?))
+
+# Support connection USB Android
+
+sudo pacman -S mtpfs --noconfirm
+pacmanerror=$((pacmanerror + $?))
+yay -S jmtpfs --noconfirm
+yayerror=$((yayerror + $?))
+
+sudo pacman -S gvfs-mtp gvfs-gphoto2 --noconfirm
+pacmanerror=$((pacmanerror + $?))
+
+# Creation des repertoires utilisateurs
+
+sudo pacman -S xdg-user-dirs --noconfirm
+pacmanerror=$((pacmanerror + $?))
+
+# ZSH
+yay -S zsh zsh-completions zsh-theme-powerlevel10k-git  ttf-meslo-nerd-font-powerlevel10k zsh-autosuggestions zsh-history-substring-search zsh-syntax-highlighting --noconfirm
+yayerror=$((yayerror + $?))
+
+
+sudo mkdir /usr/share/zsh/plugins/plugins_sudo_zsh
+sudo wget https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/plugins/sudo/sudo.plugin.zsh -O /usr/share/zsh/plugins/plugins_sudo_zsh/zsh_sudo_plugin.zsh
+
+sudo mkdir /usr/share/zsh/plugins/colored-man-pages
+sudo wget https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/plugins/colored-man-pages/colored-man-pages.plugin.zsh -O /usr/share/zsh/plugins/colored-man-pages/colored-man-pages.plugin.zsh
+
+cat /archinstall/CONFIG/.zshrc > ~/.zshrc
+cat /archinstall/CONFIG/.p10k.zsh > ~/.p10k.zsh
+
+# Nano Color + tricks
+
+cat /archinstall/CONFIG/nanorc | sudo tee /etc/nanorc
+
+# Fix group
+
+sudo usermod -a -G sys $USER
+sudo usermod -a -G lp $USER
+
+# Fix power
+
+echo '#!/bin/bash
+
+# Read the value from /sys/class/power_supply/ADP1/online
+online_status=$(cat /sys/class/power_supply/ADP1/online)
+
+# Check the value and run different scripts based on it
+if [ "$online_status" -eq 1 ] || [ "$1" = "-f" ]; then
+    # Run the script for when online status is 1 (plugged in)
+    exec /etc/acpi/SCRIPT/a-plug.sh
+else
+    # Run the script for when online status is 0 (unplugged)
+    exec /etc/acpi/SCRIPT/a-unplug.sh
+fi
+' | sudo tee /usr/local/bin/power-detect 
+sudo chmod 700 /usr/local/bin/power-detect
+echo "%wheel ALL=(root) NOPASSWD: /usr/local/bin/power-detect" | sudo tee -a /etc/sudoers
+
+echo "[Desktop Entry]
+Name=power-detect
+GenericName=power detect and apply settings
+Exec=sudo /usr/local/bin/power-detect
+Terminal=false
+Type=Application" | sudo tee /etc/xdg/autostart/power-detect.desktop
+
+# Nvidia overclock on boot
+
+yay -S python-nvidia-ml-py  --noconfirm
+yayerror=$((yayerror + $?))
+
+
+echo '#!/usr/bin/env python
+
+from pynvml import *
+
+nvmlInit()
+
+# This sets the GPU to adjust - if this gives you errors or you have multiple GPUs, set to 1 or try other values
+myGPU = nvmlDeviceGetHandleByIndex(0)
+
+nvmlDeviceSetGpuLockedClocks(myGPU, 210, 2640)
+
+# The GPU clock offset value should replace "000" in the line below.
+nvmlDeviceSetGpcClkVfOffset(myGPU, 220)
+
+# The memory clock offset should be **multiplied by 2** to replace the "000" below
+# For example, an offset of 500 means inserting a value of 1000 in the next line
+nvmlDeviceSetMemClkVfOffset(myGPU, 1200)
+' | sudo tee /usr/local/bin/nvidia-oc.py
+sudo chmod +x /usr/local/bin/nvidia-oc.py
+
+echo "[Unit]
+Description=Set up Nvidia settings
+Wants=basic.target
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/bin/nvidia-oc.py
+
+
+[Install]
+WantedBy=network.target" | sudo tee /etc/systemd/system/nvidia-oc.service
+
+sudo systemctl enable nvidia-oc.service 
+
+# Fix lid
+
+varlidline=$(sudo grep -n '#HoldoffTimeoutSec' /etc/systemd/logind.conf)
+ligne4=$(echo ${varlidline%:*})
+sudo sed -i "$(($ligne4)) d" /etc/systemd/logind.conf
+sudo sed -i "$(($ligne4-1)) a HoldoffTimeoutSec=10s" /etc/systemd/logind.conf
+
+# Wayland support enable 
+
+yay -S qt5-wayland qt6-wayland libdecor --noconfirm
+yayerror=$((yayerror + $?))
+
+echo 'LIBVIRT_DEFAULT_URI="qemu:///system"
+MOZ_ENABLE_WAYLAND=1
+QT_QPA_PLATFORM="wayland;xcb"
+CLUTTER_BACKEND=wayland
+SDL_VIDEODRIVER="wayland,x11"
+XDG_SESSION_TYPE=wayland
+GSK_RENDERER=ngl
+__EGL_VENDOR_LIBRARY_FILENAMES=/usr/share/glvnd/egl_vendor.d/50_mesa.json
+__GLX_VENDOR_LIBRARY_NAME=mesa
+GAMEMODERUNEXEC="env vblank_mode=0 LD_BIND_NOW=1 __NV_PRIME_RENDER_OFFLOAD=1 __EGL_VENDOR_LIBRARY_FILENAMES=/usr/share/glvnd/egl_vendor.d/10_nvidia.json __GLX_VENDOR_LIBRARY_NAME=nvidia __VK_LAYER_NV_optimus=NVIDIA_only"' | sudo tee -a /etc/environment
+
+# Steam + Optis
+
+sudo pacman -S steam prismlauncher ttf-liberation lib32-fontconfig --noconfirm
+pacmanerror=$((pacmanerror + $?))
+yay -S ttf-ms-win11-auto --noconfirm
+yayerror=$((yayerror + $?))
+
+
+echo '#!/bin/sh
+# Set PCI latency timers
+setpci -v -s '*:*' latency_timer=20
+setpci -v -s '0:0' latency_timer=0
+setpci -v -d "*:*:04xx" latency_timer=80' | sudo tee /usr/local/bin/setpci-latency.sh
+sudo chmod +x /usr/local/bin/setpci-latency.sh
+
+echo "[Unit]
+Description=Set PCI Device Latency Timers
+After=sysinit.target
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/bin/setpci-latency.sh
+
+[Install]
+WantedBy=multi-user.target" | sudo tee /etc/systemd/system/setpci-latency.service
+sudo systemctl enable setpci-latency.service
+
+echo '<driconf>
+   <device>
+       <application name="Default">
+           <option name="vblank_mode" value="0" />
+       </application>
+   </device>
+</driconf>' | sudo tee /etc/drirc
+
+echo "vm.max_map_count = 2147483642" | sudo tee /etc/sysctl.d/80-gamecompatibility.conf
+
+echo '#!/bin/bash
+if [ "$(cat /sys/devices/platform/msi-ec/cooler_boost)" = "on" ]; then
+    echo off | sudo tee /sys/devices/platform/msi-ec/cooler_boost
+else
+    echo on | sudo tee /sys/devices/platform/msi-ec/cooler_boost
+fi' | sudo tee /usr/local/bin/msi-coolerbooster
+sudo chmod 700 /usr/local/bin/msi-coolerbooster
+echo "%wheel ALL=(root) NOPASSWD: /usr/local/bin/msi-coolerbooster" | sudo tee -a /etc/sudoers
+
+#Gamemode
+
+sudo pacman -S gamemode lib32-gamemode --noconfirm
+pacmanerror=$((pacmanerror + $?))
+sudo usermod -a -G gamemode $USER
+
+echo '[general]
+; The reaper thread will check every 5 seconds for exited clients, for config file changes, and for the CPU/iGPU power balance
+reaper_freq=5
+
+; The desired governor is used when entering GameMode instead of "performance"
+desiredgov=performance
+; The default governor is used when leaving GameMode instead of restoring the original value
+;defaultgov=powersave
+
+; The desired platform profile is used when entering GameMode instead of "performance"
+desiredprof=performance
+; The default platform profile is used when leaving GameMode instead of restoring the original value
+;defaultgov=low-power
+
+; The iGPU desired governor is used when the integrated GPU is under heavy load
+igpu_desiredgov=performance
+; Threshold to use to decide when the integrated GPU is under heavy load.
+; This is a ratio of iGPU Watts / CPU Watts which is used to determine when the
+; integraged GPU is under heavy enough load to justify switching to
+; igpu_desiredgov.  Set this to -1 to disable all iGPU checking and always
+; use desiredgov for games.
+igpu_power_threshold=-1
+
+; GameMode can change the scheduler policy to SCHED_ISO on kernels which support it (currently
+; not supported by upstream kernels). Can be set to "auto", "on" or "off". "auto" will enable
+; with 4 or more CPU cores. "on" will always enable. Defaults to "off".
+softrealtime=off
+
+; GameMode can renice game processes. You can put any value between 0 and 20 here, the value
+; will be negated and applied as a nice value (0 means no change). Defaults to 0.
+; To use this feature, the user must be added to the gamemode group (and then rebooted):
+; sudo usermod -aG gamemode $(whoami)
+renice=0
+
+; By default, GameMode adjusts the iopriority of clients to BE/0, you can put any value
+; between 0 and 7 here (with 0 being highest priority), or one of the special values
+; "off" (to disable) or "reset" (to restore Linux default behavior based on CPU priority),
+; currently, only the best-effort class is supported thus you cannot set it here
+ioprio=0
+
+; Sets whether gamemode will inhibit the screensaver when active
+; Defaults to 1
+inhibit_screensaver=1
+
+; Sets whether gamemode will disable split lock mitigation when active
+; Defaults to 1
+disable_splitlock=1
+
+[filter]
+; If "whitelist" entry has a value(s)
+; gamemode will reject anything not in the whitelist
+;whitelist=RiseOfTheTombRaider
+
+; Gamemode will always reject anything in the blacklist
+;blacklist=HalfLife3
+;    glxgears
+
+[gpu]
+; Here Be Dragons!
+; Warning: Use these settings at your own risk
+; Any damage to hardware incurred due to this feature is your responsibility and yours alone
+; It is also highly recommended you try these settings out first manually to find the sweet spots
+
+; Setting this to the keyphrase "accept-responsibility" will allow gamemode to apply GPU optimisations such as overclocks
+;apply_gpu_optimisations=0
+
+; The DRM device number on the system (usually 0), ie. the number in /sys/class/drm/card0/
+;gpu_device=0
+
+; Nvidia specific settings
+; Requires the coolbits extension activated in nvidia-xconfig
+; This corresponds to the desired GPUPowerMizerMode
+; "Adaptive"=0 "Prefer Maximum Performance"=1 and "Auto"=2
+; See NV_CTRL_GPU_POWER_MIZER_MODE and friends in https://github.com/NVIDIA/nvidia-settings/blob/master/src/libXNVCtrl/NVCtrl.h
+;nv_powermizer_mode=1
+
+; These will modify the core and mem clocks of the highest perf state in the Nvidia PowerMizer
+; They are measured as Mhz offsets from the baseline, 0 will reset values to default, -1 or unset will not modify values
+;nv_core_clock_mhz_offset=0
+;nv_mem_clock_mhz_offset=0
+
+; AMD specific settings
+; Requires a relatively up to date AMDGPU kernel module
+; See: https://dri.freedesktop.org/docs/drm/gpu/amdgpu.html#gpu-power-thermal-controls-and-monitoring
+; It is also highly recommended you use lm-sensors (or other available tools) to verify card temperatures
+; This corresponds to power_dpm_force_performance_level, "manual" is not supported for now
+;amd_performance_level=high
+
+[cpu]
+; Parking or Pinning can be enabled with either "yes", "true" or "1" and disabled with "no", "false" or "0".
+; Either can also be set to a specific list of cores to park or pin, comma separated list where "-" denotes
+; a range. E.g "park_cores=1,8-15" would park cores 1 and 8 to 15.
+; The default is uncommented is to disable parking but enable pinning. If either is enabled the code will
+; currently only properly autodetect Ryzen 7900x3d, 7950x3d and Intel CPU:s with E- and P-cores.
+; For Core Parking, user must be added to the gamemode group (not required for Core Pinning):
+; sudo usermod -aG gamemode $(whoami)
+park_cores=no
+pin_cores=yes
+
+[supervisor]
+; This section controls the new gamemode functions gamemode_request_start_for and gamemode_request_end_for
+; The whilelist and blacklist control which supervisor programs are allowed to make the above requests
+;supervisor_whitelist=
+;supervisor_blacklist=
+
+; In case you want to allow a supervisor to take full control of gamemode, this option can be set
+; This will only allow gamemode clients to be registered by using the above functions by a supervisor client
+;require_supervisor=0
+
+[custom]
+; Custom scripts (executed using the shell) when gamemode starts and ends
+start=notify-send "GameMode started"
+    sudo /usr/local/bin/power-detect -f
+
+end=notify-send "GameMode ended"
+    sudo /usr/local/bin/power-detect
+
+; Timeout for scripts (seconds). Scripts will be killed if they do not complete within this time.
+;script_timeout=10' | sudo tee /etc/gamemode.ini
+
+# Looking-glass
+
+cd /tmp
+curl --connect-timeout 10 --retry 10 --retry-delay 10 https://looking-glass.io/artifact/B7/source --output lookinglass.tar.xz
+tar -xf lookinglass.tar.xz
+cd /tmp/looking-glass-B7
+mkdir client/build
+cd client/build
+cmake -DENABLE_X11=no -DENABLE_LIBDECOR=ON ../
+sudo make install
+cd /tmp/looking-glass-B7/module/
+sudo dkms install "."
+echo "options kvmfr static_size_mb=64" | sudo tee /etc/modprobe.d/kvmfr.conf
+echo "kvmfr" | sudo tee /etc/modules-load.d/kvmfr.conf
+echo "SUBSYSTEM==\"kvmfr\", OWNER=\"$(whoami)\", GROUP=\"kvm\", MODE=\"0660\"" | sudo tee /etc/udev/rules.d/99-kvmfr.rules
+echo 'cgroup_device_acl = [
+    "/dev/null", "/dev/full", "/dev/zero",
+    "/dev/random", "/dev/urandom",
+    "/dev/ptmx", "/dev/kvm",
+    "/dev/userfaultfd", "/dev/kvmfr0"
+]' | sudo tee -a /etc/libvirt/qemu.conf
+echo "user = \"$(whoami)\"" | sudo tee -a /etc/libvirt/qemu.conf
+
+echo '[input]
+captureOnFocus=yes
+escapeKey=KEY_RIGHTSHIFT
+rawMouse=yes
+
+[spice]
+clipboard=no' | sudo tee /etc/looking-glass-client.ini
+
+# Script Transparent Huge Page
+
+sudo mkdir /etc/libvirt/hooks
+echo "IyEvYmluL2Jhc2gKCmd1ZXN0X25hbWU9IiQxIgpsaWJ2aXJ0X3Rhc2s9IiQyIgpsaWJ2aXJ0X3N1YnRhc2s9IiQzIgoKaWYgW1sgJGd1ZXN0X25hbWUgPT0gKiJ0aHAiKiBdXTsgdGhlbgogICAgaWYgWyAkbGlidmlydF90YXNrID09ICJwcmVwYXJlIiBdICYmIFsgJGxpYnZpcnRfc3VidGFzayA9PSAiYmVnaW4iIF07dGhlbgogICAgICAgIE1FTU9SWT0kKGVjaG8gJGd1ZXN0X25hbWUgfCB0YWMgLXMnLScgfCBoZWFkIC0xKQoKICAgICAgICBIVUdFUEFHRVM9IiQoKCRNRU1PUlkvJCgoJChncmVwIEh1Z2VwYWdlc2l6ZSAvcHJvYy9tZW1pbmZvIHwgYXdrICd7cHJpbnQgJDJ9JykvMTAyNCkpKSkiCgogICAgICAgIGVjaG8gIkFsbG9jYXRpbmcgaHVnZXBhZ2VzLi4uIgogICAgICAgIGVjaG8gJEhVR0VQQUdFUyA+IC9wcm9jL3N5cy92bS9ucl9odWdlcGFnZXMKICAgICAgICBBTExPQ19QQUdFUz0kKGNhdCAvcHJvYy9zeXMvdm0vbnJfaHVnZXBhZ2VzKQoKICAgICAgICBUUklFUz0wCiAgICAgICAgd2hpbGUgKCggJEFMTE9DX1BBR0VTICE9ICRIVUdFUEFHRVMgJiYgJFRSSUVTIDwgMTAwMCApKQogICAgICAgIGRvCiAgICAgICAgICAgIGVjaG8gMSA+IC9wcm9jL3N5cy92bS9jb21wYWN0X21lbW9yeSAgICAgICAgICAgICMjIGRlZnJhZyByYW0KICAgICAgICAgICAgZWNobyAkSFVHRVBBR0VTID4gL3Byb2Mvc3lzL3ZtL25yX2h1Z2VwYWdlcwogICAgICAgICAgICBBTExPQ19QQUdFUz0kKGNhdCAvcHJvYy9zeXMvdm0vbnJfaHVnZXBhZ2VzKQogICAgICAgICAgICBlY2hvICJTdWNjZXNmdWxseSBhbGxvY2F0ZWQgJEFMTE9DX1BBR0VTIC8gJEhVR0VQQUdFUyIKICAgICAgICAgICAgbGV0IFRSSUVTKz0xCiAgICAgICAgZG9uZQoKICAgICAgICBpZiBbICIkQUxMT0NfUEFHRVMiIC1uZSAiJEhVR0VQQUdFUyIgXQogICAgICAgIHRoZW4KICAgICAgICAgICAgZWNobyAiTm90IGFibGUgdG8gYWxsb2NhdGUgYWxsIGh1Z2VwYWdlcy4gUmV2ZXJ0aW5nLi4uIgogICAgICAgICAgICBlY2hvIDAgPiAvcHJvYy9zeXMvdm0vbnJfaHVnZXBhZ2VzCiAgICAgICAgICAgIGV4aXQgMQogICAgICAgIGZpCiAgICBmaQogICAgaWYgWyAkbGlidmlydF90YXNrID09ICJyZWxlYXNlIiBdICYmIFsgJGxpYnZpcnRfc3VidGFzayA9PSAiZW5kIiBdO3RoZW4KICAgICAgICBlY2hvIDAgPiAvcHJvYy9zeXMvdm0vbnJfaHVnZXBhZ2VzCiAgICBmaQpmaQ==" | base64 -d | sudo tee /etc/libvirt/hooks/qemu
+sudo chmod +x /etc/libvirt/hooks/qemu
+
+#Fix Upower
+sudo sed -i 's/^CriticalPowerAction=HybridSleep$/CriticalPowerAction=PowerOff/' /etc/UPower/UPower.conf
+
+# delete useless tools
+sudo rm -rf /archinstall
+sudo rm /usr/local/bin/aurinstall
+sudo rm /usr/local/bin/mkinitcpio-editor
+
+# disable root login
+sudo passwd --lock root
+
+# Restore pacman default download
+sudo sed -i '/^XferCommand = \/usr\/bin\/curl/ s/^/#/' /etc/pacman.conf
+
+if [ "$yayerror" -eq 0 ]; then
+    echo "Every yay installation occurred without error."
+else
+    echo "There was an error in one or more yay installations."
+fi
+
+if [ "$pacmanerror" -eq 0 ]; then
+    echo "Every pacman installation occurred without error."
+else
+    echo "There was an error in one or more pacman installations."
+fi
+
+read -p "Press any key to continue..."
+
+yay -Scc --noconfirm
+yes | LANG=C sudo pacman -Scc
+go clean -cache
+sudo rm -rf ~/.cache/httpdirfs/https*
+
+sleep 20
+
+sudo reboot
