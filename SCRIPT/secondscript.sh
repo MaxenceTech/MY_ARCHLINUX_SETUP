@@ -48,12 +48,12 @@ sudo pacman -Syu --noconfirm
 pacmanerror=$((pacmanerror + $?))
 
 #Yay
-cd /tmp
+cd /tmp || exit 1
 git clone https://aur.archlinux.org/yay.git
-cd yay
+cd yay || exit 1
 makepkg -si --noconfirm 
 
-cd ~
+cd ~ || exit 1
 yay -Syu --noconfirm
 
 
