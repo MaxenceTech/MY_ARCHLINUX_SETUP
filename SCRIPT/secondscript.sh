@@ -19,7 +19,6 @@ do
     sleep 10
  	ping -c 5 google.com 
     x=$?
-        x=$?
     fi
     if [ $t != 0 ]; then
         echo -e "\n\n\nNot connected !\n\n\n"
