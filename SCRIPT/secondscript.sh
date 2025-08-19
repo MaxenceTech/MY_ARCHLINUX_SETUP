@@ -17,9 +17,8 @@ do
     sudo nmcli device wifi connect "$SSID" password "$PASSWORD"
     t=$?
     sleep 10
-    ping -c 5 google.com
+    ping -c 5 google.com 
     x=$?
-    fi
     if [ $t != 0 ]; then
         echo -e "\n\n\nNot connected !\n\n\n"
     elif [ $x != 0 ]; then
