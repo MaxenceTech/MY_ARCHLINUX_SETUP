@@ -1,15 +1,33 @@
 #!/bin/bash
 
+#==============================================================================
+# Second Configuration Script (Post-Installation Setup)
+#==============================================================================
+# Description: Post-installation configuration script for desktop environment,
+#              applications, gaming support, and advanced system features
+# Author: MaxenceTech
+# Usage: Run after completing firstscript.sh and rebooting
+# Prerequisites: Completed base system installation, network connectivity
+#==============================================================================
+
 # Exit on any error, undefined variables, and pipe failures
 set -euo pipefail
 
+#==============================================================================
+# NETWORK CONNECTIVITY VERIFICATION
+#==============================================================================
+
+# Verify and establish network connectivity
 x=10
 if ping -c 5 google.com; then
     x=0
 fi
+
+# WiFi connection setup if needed
 while [ $x != 0 ]
 do
-	sudo nmcli device wifi list
+    echo "Configuring WiFi connection..."
+    sudo nmcli device wifi list
     echo -e "\n\n\n\nSSID :"
     read -r SSID
     echo "Password :"
@@ -26,28 +44,58 @@ do
     fi
 done
 
+#==============================================================================
+# SYSTEM TIME AND HOSTNAME CONFIGURATION
+#==============================================================================
 
+# Configure system timezone
 sudo timedatectl set-timezone Europe/Paris
 sudo systemctl enable systemd-timesyncd
-x=10
 
+# Set hostname with validation
+x=10
 while [ $x != 0 ]
 do
     echo "Nom Machine :"
     read -r hostnamevar
-    sudo hostnamectl set-hostname "$hostnamevar"
-    x=$?
+    # Basic hostname validation (RFC 1123 compliant)
+    if [[ "$hostnamevar" =~ ^[a-zA-Z0-9]([a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?$ ]] && [ ${#hostnamevar} -ge 1 ] && [ ${#hostnamevar} -le 63 ]; then
+        sudo hostnamectl set-hostname "$hostnamevar"
+        x=$?
+    else
+        echo "Invalid hostname. Use 1-63 characters (letters, numbers, hyphens only, no leading/trailing hyphens)."
+        x=1
+    fi
 done
 
+# Update hosts file
 echo "127.0.0.1 localhost
 ::1 localhost
 127.0.1.1 $hostnamevar" | sudo tee -a /etc/hosts
 
+#==============================================================================
+# PACKAGE INSTALLATION TRACKING
+#==============================================================================
+
+# Initialize error tracking for package installations
 pacmanerror=0
+yayerror=0
+
+#==============================================================================
+# SYSTEM UPDATE
+#==============================================================================
+
+# Update system packages
+echo "Updating system packages..."
 sudo pacman -Syu --noconfirm
 pacmanerror=$((pacmanerror + $?))
 
-#Yay
+#==============================================================================
+# AUR HELPER INSTALLATION
+#==============================================================================
+
+# Install Yay AUR helper
+echo "Installing AUR helper (yay)..."
 cd /tmp || exit 1
 git clone https://aur.archlinux.org/yay.git
 cd yay || exit 1
@@ -56,27 +104,36 @@ makepkg -si --noconfirm
 cd ~ || exit 1
 yay -Syu --noconfirm
 
-
+# Initialize yay error tracking
 yayerror=0
 
-# Wayland
+#==============================================================================
+# DISPLAY SERVER INSTALLATION
+#==============================================================================
 
+# Install Wayland support
+echo "Installing Wayland display server..."
 sudo pacman -S wayland lib32-wayland wayland-protocols --noconfirm
 pacmanerror=$((pacmanerror + $?))
 
-# xorg
-
+# Install Xorg support (for compatibility)
+echo "Installing Xorg display server..."
 sudo pacman -S xorg-server xorg-apps xorg-xwayland xorg-xlsclients --noconfirm
 pacmanerror=$((pacmanerror + $?))
 
-# Graphics support for Intel
+#==============================================================================
+# GRAPHICS DRIVERS INSTALLATION
+#==============================================================================
+
+# Install Intel graphics drivers
+echo "Installing Intel graphics drivers..."
 sudo pacman -S mesa lib32-mesa mesa-utils intel-media-driver libva-utils \
     vulkan-icd-loader lib32-vulkan-icd-loader vulkan-intel lib32-vulkan-intel \
     vulkan-mesa-layers lib32-vulkan-mesa-layers --noconfirm
 pacmanerror=$((pacmanerror + $?))
 
-# Graphics support for NVIDIA
-
+# Install NVIDIA graphics drivers
+echo "Installing NVIDIA graphics drivers..."
 sudo pacman -S nvidia-open nvidia-utils lib32-nvidia-utils nvidia-settings libxnvctrl nvidia-prime --noconfirm
 pacmanerror=$((pacmanerror + $?))
 
@@ -221,11 +278,21 @@ yay -S zsh zsh-completions zsh-theme-powerlevel10k-git  ttf-meslo-nerd-font-powe
 yayerror=$((yayerror + $?))
 
 
-sudo mkdir /usr/share/zsh/plugins/plugins_sudo_zsh
-sudo wget https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/plugins/sudo/sudo.plugin.zsh -O /usr/share/zsh/plugins/plugins_sudo_zsh/zsh_sudo_plugin.zsh
+# ZSH plugins installation with error handling
+echo "Installing ZSH plugins..."
+sudo mkdir -p /usr/share/zsh/plugins/plugins_sudo_zsh
+if ! sudo wget --timeout=30 --tries=3 \
+    https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/plugins/sudo/sudo.plugin.zsh \
+    -O /usr/share/zsh/plugins/plugins_sudo_zsh/zsh_sudo_plugin.zsh; then
+    echo "Warning: Failed to download sudo plugin"
+fi
 
-sudo mkdir /usr/share/zsh/plugins/colored-man-pages
-sudo wget https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/plugins/colored-man-pages/colored-man-pages.plugin.zsh -O /usr/share/zsh/plugins/colored-man-pages/colored-man-pages.plugin.zsh
+sudo mkdir -p /usr/share/zsh/plugins/colored-man-pages
+if ! sudo wget --timeout=30 --tries=3 \
+    https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/plugins/colored-man-pages/colored-man-pages.plugin.zsh \
+    -O /usr/share/zsh/plugins/colored-man-pages/colored-man-pages.plugin.zsh; then
+    echo "Warning: Failed to download colored-man-pages plugin"
+fi
 
 cat /archinstall/CONFIG/.zshrc > ~/.zshrc
 cat /archinstall/CONFIG/.p10k.zsh > ~/.p10k.zsh

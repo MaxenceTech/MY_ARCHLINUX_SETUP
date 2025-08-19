@@ -1,19 +1,41 @@
 #!/bin/bash
+
+#==============================================================================
+# Mkinitcpio Module Editor
+#==============================================================================
+# Description: Utility script for managing kernel modules in mkinitcpio.conf
+# Author: MaxenceTech
+# Usage: mkinitcpio-editor [OPTION] [MODULE...]
+# Examples: 
+#   mkinitcpio-editor -a kvm vfio    # Add modules
+#   mkinitcpio-editor -r old_module  # Remove modules
+#   mkinitcpio-editor -p             # Print current modules
+#==============================================================================
+
 set -euo pipefail
 
-MKINITCONF="/etc/mkinitcpio.conf"
+# Configuration file path
+readonly MKINITCONF="/etc/mkinitcpio.conf"
 
+#==============================================================================
+# UTILITY FUNCTIONS
+#==============================================================================
+
+# Get the MODULES line from mkinitcpio.conf
 get_modules_line() {
     grep -v "^#" "$MKINITCONF" | grep "^MODULES="
 }
 
+# Extract modules from the MODULES line
 extract_modules() {
     local line
     line=$(get_modules_line)
     # Remove 'MODULES=(' and trailing ')'
-    echo "${line#MODULES=(}" | sed 's/)$//'
+    local temp="${line#MODULES=(}"
+    echo "${temp%)}"
 }
 
+# Update the MODULES line in mkinitcpio.conf
 update_modules() {
     local new_modules="$1"
     # Remove the old MODULES= line, add new one where it was
@@ -28,15 +50,20 @@ update_modules() {
     fi
 }
 
+#==============================================================================
+# MODULE MANAGEMENT FUNCTIONS
+#==============================================================================
+
+# Add modules to mkinitcpio.conf (duplicates are automatically filtered)
 add_modules() {
     local current
     current=$(extract_modules)
-    local added=()
     local word
     # Build an array for current modules
     read -ra arr <<<"$current"
     for word in "${@:2}"; do
-        if [[ ! " ${arr[*]} " =~ " $word " ]]; then
+        # Check if module is not already present
+        if [[ ! " ${arr[*]} " =~ \ $word\  ]]; then
             arr+=("$word")
         fi
     done
@@ -45,6 +72,7 @@ add_modules() {
     echo "Modules added successfully!"
 }
 
+# Remove modules from mkinitcpio.conf
 remove_modules() {
     local current
     current=$(extract_modules)
@@ -52,6 +80,8 @@ remove_modules() {
     local filtered=()
     local word
     read -ra arr <<<"$current"
+    
+    # Filter out modules to be removed
     for word in "${arr[@]}"; do
         skip=
         for r in "${to_remove[@]}"; do
@@ -69,6 +99,7 @@ remove_modules() {
     echo "Modules removed successfully!"
 }
 
+# Display currently configured modules
 print_modules() {
     local current
     current=$(extract_modules)
@@ -79,6 +110,11 @@ print_modules() {
     fi
 }
 
+#==============================================================================
+# HELP AND USAGE
+#==============================================================================
+
+# Display help information
 show_help() {
     cat <<EOF
 
@@ -94,11 +130,19 @@ show_help() {
 EOF
 }
 
+#==============================================================================
+# MAIN EXECUTION
+#==============================================================================
+
+# Main function with command parsing and validation
 main() {
+    # Validate minimum arguments
     if [[ $# -lt 1 ]]; then
         show_help
         exit 1
     fi
+    
+    # Parse commands and execute appropriate functions
     case "$1" in
         -a|--add)
             if [[ $# -lt 2 ]]; then
@@ -128,4 +172,5 @@ main() {
     esac
 }
 
+# Execute main function with all arguments
 main "$@"
