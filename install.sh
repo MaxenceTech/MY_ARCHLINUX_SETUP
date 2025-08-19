@@ -95,19 +95,19 @@ elif [ "$nvme_count" -eq 1 ]; then
     
     # Partition single disk: EFI + Swap + Root
     sgdisk -Z /dev/nvme0n1
-    sgdisk -n 1:0:+2G -t 1:ef00 /dev/nvme0n1    # EFI partition
-    sgdisk -n 2:0:+8G -t 2:8200 /dev/nvme0n1    # Swap partition
-    sgdisk -n 3:0:0 -t 3:8300 /dev/nvme0n1      # Root partition
+    sgdisk -n 1:0:+2G -t 1:ef00 "$disk1"    # EFI partition
+    sgdisk -n 2:0:+8G -t 2:8200 "$disk1"    # Swap partition
+    sgdisk -n 3:0:0 -t 3:8300 "$disk1"      # Root partition
 
     # Create filesystems
-    mkfs.fat -F32 /dev/nvme0n1p1
-    mkswap --label diskswap /dev/nvme0n1p2
-    mkfs.ext4 /dev/nvme0n1p3
+    mkfs.fat -F32 "${disk1}p1"
+    mkswap --label diskswap "${disk1}p2"
+    mkfs.ext4 "${disk1}p3"
 
     # Mount filesystems
-    mount /dev/nvme0n1p3 /mnt
-    mount --mkdir /dev/nvme0n1p1 /mnt/boot
-    swapon /dev/nvme0n1p2
+    mount "${disk1}p3" /mnt
+    mount --mkdir "${disk1}p1" /mnt/boot
+    swapon "${disk1}p2"
 
 elif [ "$nvme_count" -eq 2 ]; then
     # Dual NVMe disk configuration
