@@ -207,10 +207,9 @@ yay -S mullvad-vpn-bin qbittorrent --noconfirm
 yayerror=$((yayerror + $?))
 
 # Android file system support (grouped)
-sudo pacman -S mtpfs gvfs-mtp gvfs-gphoto2 --noconfirm
+sudo pacman -S mtpfs gvfs-mtp gvfs-gphoto2 libmtp --noconfirm
+sudo usermod -a -G adbusers $USER
 pacmanerror=$((pacmanerror + $?))
-yay -S jmtpfs --noconfirm
-yayerror=$((yayerror + $?))
 
 # Creation des repertoires utilisateurs
 
