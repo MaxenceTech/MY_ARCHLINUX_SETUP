@@ -130,7 +130,7 @@ sudo sed -i 's/resolve/mdns_minimal [NOTFOUND=return] resolve/g' /etc/nsswitch.c
 
 sudo systemctl enable cups.socket
 
-# GNOME desktop environment (grouped)
+# GNOME desktop environment
 sudo pacman -S dmidecode gnome gnome-tweaks gnome-shell-extensions \
     xdg-desktop-portal xdg-desktop-portal-gnome power-profiles-daemon \
     gnome-themes-standard --noconfirm
@@ -157,7 +157,7 @@ pacmanerror=$((pacmanerror + $?))
 sudo cp -r /archinstall/SCRIPT/ACPID/* /etc/acpi
 sudo systemctl enable --now acpid.service
 
-# QEMU/KVM virtualization (grouped) 
+# QEMU/KVM virtualization
 echo "softdep nvidia pre: vfio-pci" | sudo tee /etc/modprobe.d/vfio.conf
 sudo pacman -S qemu-full qemu-img libvirt virt-install virt-manager virt-viewer \
     edk2-ovmf dnsmasq swtpm guestfs-tools libosinfo --noconfirm
