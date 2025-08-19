@@ -18,9 +18,15 @@ set -euo pipefail
 #==============================================================================
 
 # Cleanup any existing mounts (ignore errors if not mounted)
-umount /dev/nvme0n1p1 2>/dev/null || true
-umount /dev/nvme0n1p2 2>/dev/null || true
-swapoff /dev/nvme0n1p3 2>/dev/null || true
+umount -a 2>/dev/null || true
+swapoff -a 2>/dev/null || true
+
+for disk in /dev/nvme*n1; do
+  echo "Sanitizing $disk..."
+  nvme sanitize "$disk" -a 0x02
+done
+
+sleep 60
 
 # Set French keyboard layout
 loadkeys fr-pc
