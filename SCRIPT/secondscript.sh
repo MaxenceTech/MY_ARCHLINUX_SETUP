@@ -107,7 +107,7 @@ sudo pacman -S bluez bluez-utils --noconfirm
 pacmanerror=$((pacmanerror + $?))
 sudo systemctl enable bluetooth.service
 
-# Audio system (grouped)
+# Audio system and opti
 sudo pacman -S alsa-utils alsa-plugins alsa-firmware sof-firmware alsa-ucm-conf \
     pipewire lib32-pipewire wireplumber pipewire-alsa pipewire-pulse pamixer \
     pipewire-jack lib32-pipewire-jack --noconfirm
@@ -119,7 +119,7 @@ nice-level = -11
 realtime-scheduling = yes
 realtime-priority = 5" | sudo tee /etc/pulse/daemon.conf
 
-# Printing support (grouped)
+# Printing support
 sudo pacman -S cups cups-pdf avahi nss-mdns ghostscript gsfonts foomatic-db-engine \
     foomatic-db foomatic-db-ppds gutenprint foomatic-db-gutenprint-ppds usbutils --noconfirm
 pacmanerror=$((pacmanerror + $?))
