@@ -127,7 +127,7 @@ sed -i "$((ligne-1)) a HOOKS=(systemd autodetect modconf block keyboard sd-vcons
 
 # Configure system performance parameters
 echo "Applying system performance tweaks..."
-echo "vm.swappiness=2
+echo "vm.swappiness=10
 vm.dirty_bytes = 4294967296
 vm.dirty_background_bytes = 2147483648
 vm.vfs_cache_pressure=50" | tee /etc/sysctl.d/99-ramtweaks.conf
@@ -159,25 +159,25 @@ echo "title   Arch Linux NVIDIA
 linux   /vmlinuz-linux
 initrd  /intel-ucode.img
 initrd  /initramfs-linux.img
-options root=$PARTUUIDGREP rw quiet mitigations=auto,nosmt nowatchdog tsc=reliable clocksource=tsc intel_iommu=on iommu=pt vt.global_cursor_default=0 zswap.enabled=1 zswap.shrinker_enabled=1 zswap.compressor=lz4 zswap.max_pool_percent=6 zswap.zpool=zsmalloc modprobe.blacklist=kvmfr" | tee /boot/loader/entries/arch.conf
+options root=$PARTUUIDGREP rw quiet mitigations=auto,nosmt nowatchdog tsc=reliable clocksource=tsc intel_iommu=on iommu=pt vt.global_cursor_default=0 zswap.enabled=1 zswap.shrinker_enabled=1 zswap.compressor=lz4 zswap.max_pool_percent=12 zswap.zpool=zsmalloc modprobe.blacklist=kvmfr" | tee /boot/loader/entries/arch.conf
 
 echo "title   Arch Linux GPU PASSTROUGH
 linux   /vmlinuz-linux
 initrd  /intel-ucode.img
 initrd  /initramfs-linux.img
-options root=$PARTUUIDGREP rw quiet mitigations=auto,nosmt nowatchdog tsc=reliable clocksource=tsc intel_iommu=on iommu=pt vfio-pci.ids=10de:27a0,10de:22bc vt.global_cursor_default=0 zswap.enabled=1 zswap.shrinker_enabled=1 zswap.compressor=lz4 zswap.max_pool_percent=6 zswap.zpool=zsmalloc" | tee /boot/loader/entries/arch-gpupasstrough.conf
+options root=$PARTUUIDGREP rw quiet mitigations=auto,nosmt nowatchdog tsc=reliable clocksource=tsc intel_iommu=on iommu=pt vfio-pci.ids=10de:27a0,10de:22bc vt.global_cursor_default=0 zswap.enabled=1 zswap.shrinker_enabled=1 zswap.compressor=lz4 zswap.max_pool_percent=12 zswap.zpool=zsmalloc" | tee /boot/loader/entries/arch-gpupasstrough.conf
 
 echo "title   Fallback Arch Linux NVIDIA
 linux   /vmlinuz-linux
 initrd  /intel-ucode.img
 initrd  /initramfs-linux-fallback.img
-options root=$PARTUUIDGREP rw quiet mitigations=auto,nosmt nowatchdog tsc=reliable clocksource=tsc intel_iommu=on iommu=pt vt.global_cursor_default=0 zswap.enabled=1 zswap.shrinker_enabled=1 zswap.compressor=lz4 zswap.max_pool_percent=6 zswap.zpool=zsmalloc modprobe.blacklist=kvmfr" | tee /boot/loader/entries/fallback-arch.conf
+options root=$PARTUUIDGREP rw quiet mitigations=auto,nosmt nowatchdog tsc=reliable clocksource=tsc intel_iommu=on iommu=pt vt.global_cursor_default=0 zswap.enabled=1 zswap.shrinker_enabled=1 zswap.compressor=lz4 zswap.max_pool_percent=12 zswap.zpool=zsmalloc modprobe.blacklist=kvmfr" | tee /boot/loader/entries/fallback-arch.conf
 
 echo "title   Fallback Arch Linux GPU PASSTROUGH
 linux   /vmlinuz-linux
 initrd  /intel-ucode.img
 initrd  /initramfs-linux-fallback.img
-options root=$PARTUUIDGREP rw quiet mitigations=auto,nosmt nowatchdog tsc=reliable clocksource=tsc intel_iommu=on iommu=pt vfio-pci.ids=10de:27a0,10de:22bc vt.global_cursor_default=0 zswap.enabled=1 zswap.shrinker_enabled=1 zswap.compressor=lz4 zswap.max_pool_percent=6 zswap.zpool=zsmalloc" | tee /boot/loader/entries/fallback-arch-gpupasstrough.conf
+options root=$PARTUUIDGREP rw quiet mitigations=auto,nosmt nowatchdog tsc=reliable clocksource=tsc intel_iommu=on iommu=pt vfio-pci.ids=10de:27a0,10de:22bc vt.global_cursor_default=0 zswap.enabled=1 zswap.shrinker_enabled=1 zswap.compressor=lz4 zswap.max_pool_percent=12 zswap.zpool=zsmalloc" | tee /boot/loader/entries/fallback-arch-gpupasstrough.conf
 
 # Update bootloader and enable automatic updates
 bootctl update
