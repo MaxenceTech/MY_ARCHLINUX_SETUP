@@ -15,7 +15,6 @@ pacmanerror=$((pacmanerror + $?))
 # Enable NetworkManager
 systemctl enable NetworkManager
 
-mv /archinstall/SCRIPT/aurinstall.sh /usr/local/bin/aurinstall
 mv /archinstall/SCRIPT/mkinitcpio-editor.sh /usr/local/bin/mkinitcpio-editor
 sed -i 's/^#\(fr_FR.UTF-8\s*UTF-8\)/\1/' /etc/locale.gen
 locale-gen
