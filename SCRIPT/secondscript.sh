@@ -342,12 +342,16 @@ yay -S ttf-ms-win11-auto --noconfirm
 yayerror=$((yayerror + $?))
 
 
-echo '#!/bin/sh
+sudo tee /usr/local/bin/setpci-latency.sh > /dev/null << 'EOF'
+#!/bin/sh
 # Set PCI latency timers
-setpci -v -s "*:*" latency_timer=20
-setpci -v -s "0:0" latency_timer=0
-setpci -v -d "*:*:04xx" latency_timer=80' | sudo tee /usr/local/bin/setpci-latency.sh
+setpci -v -s '*:*' latency_timer=20
+setpci -v -s '0:0' latency_timer=0
+setpci -v -d "*:*:04xx" latency_timer=80
+EOF
+
 sudo chmod +x /usr/local/bin/setpci-latency.sh
+
 
 echo "[Unit]
 Description=Set PCI Device Latency Timers
