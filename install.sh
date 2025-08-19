@@ -18,8 +18,16 @@ set -euo pipefail
 #==============================================================================
 
 # Cleanup any existing mounts (ignore errors if not mounted)
-umount -a 2>/dev/null || true
-swapoff -a 2>/dev/null || true
+
+for mount in $(mount | grep '/dev/nvme' | cut -d' ' -f1); do
+  echo "Unmounting $mount"
+  sudo umount $mount 2>/dev/null || true
+done
+
+for swap in $(cat /proc/swaps | grep '/dev/nvme' | cut -d' ' -f1); do
+  echo "Disabling swap on $swap"
+  sudo swapoff $swap 2>/dev/null || true
+done
 
 for disk in /dev/nvme*n1; do
   echo "Sanitizing $disk..."
