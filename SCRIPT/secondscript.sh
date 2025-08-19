@@ -545,7 +545,6 @@ sudo sed -i 's/^CriticalPowerAction=HybridSleep$/CriticalPowerAction=PowerOff/' 
 
 # delete useless tools
 sudo rm -rf /archinstall
-sudo rm /usr/local/bin/aurinstall
 sudo rm /usr/local/bin/mkinitcpio-editor
 
 # disable root login
