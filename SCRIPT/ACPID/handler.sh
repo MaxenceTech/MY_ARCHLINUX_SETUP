@@ -5,12 +5,10 @@
 #==============================================================================
 # Description: Main ACPI event handler that routes power events to appropriate
 #              scripts based on adapter connection status
-# Author: MaxenceTech
 # Usage: Called automatically by acpid daemon
 # Events: Handles AC adapter connect/disconnect events
 #==============================================================================
 
-# Default acpi script that takes an entry for all actions
 case "$1" in
     ac_adapter)
         case "$2" in
