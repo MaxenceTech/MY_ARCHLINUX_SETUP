@@ -193,7 +193,7 @@ pacmanerror=$((pacmanerror + $?))
 sudo systemctl enable fstrim.timer
 
 
-# Essential applications (grouped)
+# Essential applications
 sudo pacman -S speech-dispatcher libreoffice-still-fr file-roller zip unzip p7zip \
     unrar python-pip tk gimp bolt hunspell-fr noto-fonts-emoji --noconfirm
 pacmanerror=$((pacmanerror + $?))
