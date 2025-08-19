@@ -1,44 +1,131 @@
 #!/bin/bash
-moduleainsere=""
-brutegrepmodule=$(grep -v  -n "^#" /etc/mkinitcpio.conf | grep "MODULES=")
-textemodule=$(echo ${brutegrepmodule#*:}) 
-lignemodule=$(echo ${brutegrepmodule%:*})
-if [ $(echo "$1"| wc -c) -gt 1 ]; then
-    if [ $1 = -a ] || [ $1 = --add ]; then
-        for param in "${@:2}"
-        do
-            moduleainsere+="$param "
-        done
-        if [ $(echo $textemodule|wc -c) -gt 11 ]; then
-            moduledebase=$(echo $textemodule | cut -b 10-$(($(echo $textemodule|wc -c)-2))) 
-        else
-            moduledebase=" "
+set -euo pipefail
+
+MKINITCONF="/etc/mkinitcpio.conf"
+
+get_modules_line() {
+    grep -v "^#" "$MKINITCONF" | grep "^MODULES="
+}
+
+extract_modules() {
+    local line
+    line=$(get_modules_line)
+    # Remove 'MODULES=(' and trailing ')'
+    echo "${line#MODULES=(}" | sed 's/)$//'
+}
+
+update_modules() {
+    local new_modules="$1"
+    # Remove the old MODULES= line, add new one where it was
+    local lineno
+    lineno=$(grep -n "^MODULES=" "$MKINITCONF" | cut -d: -f1)
+    if [[ -z "$lineno" ]]; then
+        # If not present, append at end
+        echo "MODULES=($new_modules)" >> "$MKINITCONF"
+    else
+        sed -i "${lineno}d" "$MKINITCONF"
+        sed -i "$((lineno-1))a MODULES=($new_modules)" "$MKINITCONF"
+    fi
+}
+
+add_modules() {
+    local current
+    current=$(extract_modules)
+    local added=()
+    local word
+    # Build an array for current modules
+    read -ra arr <<<"$current"
+    for word in "${@:2}"; do
+        if [[ ! " ${arr[*]} " =~ " $word " ]]; then
+            arr+=("$word")
         fi
-        sed -i "$(($lignemodule)) d" /etc/mkinitcpio.conf 
-        sed -i "$(($lignemodule-1)) a MODULES=($moduledebase$moduleainsere)" /etc/mkinitcpio.conf 
-        mkinitcpio -p linux
-    elif [ $1 = -r ] || [ $1 = --remove ]; then
-        for param in "${@:2}"
-        do
-            if [ $(grep "MODULES=(" /etc/mkinitcpio.conf | grep -c $param) -gt 0 ]; then
-                sed -i "s/[[:space:]]$param//g" /etc/mkinitcpio.conf
-                mkinitcpio -p linux
-                echo "$param supprimé de /etc/mkinitcpio.conf !"
-            else
-                echo "$param non trouvé dans /etc/mkinitcpio.conf !"
+    done
+    update_modules "${arr[*]}"
+    mkinitcpio -p linux
+    echo "Modules added successfully!"
+}
+
+remove_modules() {
+    local current
+    current=$(extract_modules)
+    local to_remove=("${@:2}")
+    local filtered=()
+    local word
+    read -ra arr <<<"$current"
+    for word in "${arr[@]}"; do
+        skip=
+        for r in "${to_remove[@]}"; do
+            if [[ "$word" == "$r" ]]; then
+                skip=1
+                break
             fi
         done
-    elif [ $1 = -p ] || [ $1 = --print ]; then
-        if [ $(echo "$textemodule" | cut -b 10-$(($(echo "$textemodule"|wc -c)-2)) | tr -d " \t\n\r" | wc -c) -gt 0 ]; then
-            echo Les modules installés sont : $(echo $textemodule | cut -b 10-$(($(echo $textemodule|wc -c)-2)))
-        else
-            echo "Aucun module présent dans /etc/mkinitcpio.conf !"
+        if [[ -z "$skip" ]]; then
+            filtered+=("$word")
         fi
-    elif [ $1 = -h ] || [ $1 = --help ]; then
-        echo -e "\n                                          ###############\n###########################################  Commandes  ############################################\n                                          ###############                                          #\n                                                                                                   #\n--print ou -p  : Affiche les modules présents dans /etc/mkinitcpio.conf.                           #\n--add ou -a    : Ajoute un ou des modules dans /etc/mkinitcpio.conf et applique la modification.   #\n--remove ou -r : Supprime un ou des modules dans /etc/mkinitcpio.conf et applique la modification. #\n                                                                                                   #\n####################################################################################################\n"
+    done
+    update_modules "${filtered[*]}"
+    mkinitcpio -p linux
+    echo "Modules removed successfully!"
+}
+
+print_modules() {
+    local current
+    current=$(extract_modules)
+    if [[ -n "$current" && "$current" != " " ]]; then
+        echo "Les modules installés sont : $current"
     else
-        echo -e "Paramètre non valide !\n--help ou -h pour voir toutes les commandes !"
+        echo "Aucun module présent dans /etc/mkinitcpio.conf !"
     fi
-else
-echo "Aucun paramètre !"
-fi
+}
+
+show_help() {
+    cat <<EOF
+
+############### Commandes disponibles ###############
+
+  -p, --print     : Affiche les modules présents dans /etc/mkinitcpio.conf.
+  -a, --add       : Ajoute un ou des modules, ex : $0 -a kvm vfio.
+  -r, --remove    : Supprime un ou des modules, ex : $0 -r kvm vfio.
+  -h, --help      : Affiche cette aide.
+
+#####################################################
+
+EOF
+}
+
+main() {
+    if [[ $# -lt 1 ]]; then
+        show_help
+        exit 1
+    fi
+    case "$1" in
+        -a|--add)
+            if [[ $# -lt 2 ]]; then
+                echo "Spécifiez au moins un module à ajouter."
+                exit 1
+            fi
+            add_modules "$@"
+            ;;
+        -r|--remove)
+            if [[ $# -lt 2 ]]; then
+                echo "Spécifiez au moins un module à supprimer."
+                exit 1
+            fi
+            remove_modules "$@"
+            ;;
+        -p|--print)
+            print_modules
+            ;;
+        -h|--help)
+            show_help
+            ;;
+        *)
+            echo "Commande inconnue : $1"
+            show_help
+            exit 1
+            ;;
+    esac
+}
+
+main "$@"

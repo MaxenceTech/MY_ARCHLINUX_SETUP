@@ -1,23 +1,20 @@
 #!/bin/bash
+
+# Exit on any error, undefined variables, and pipe failures  
+set -euo pipefail
+
 pacmanerror=0
 pacman -Syu --noconfirm
 pacmanerror=$((pacmanerror + $?))
-pacman -S nano --noconfirm
+
+# Base system packages
+pacman -S nano base-devel openssh networkmanager wpa_supplicant wireless_tools \
+    netctl dialog iputils man git --noconfirm
 pacmanerror=$((pacmanerror + $?))
-pacman -S base-devel openssh --noconfirm
-pacmanerror=$((pacmanerror + $?))
-pacman -S networkmanager wpa_supplicant wireless_tools netctl --noconfirm
-pacmanerror=$((pacmanerror + $?))
-pacman -S dialog --noconfirm
-pacmanerror=$((pacmanerror + $?))
+
+# Enable NetworkManager
 systemctl enable NetworkManager
-pacman -S iputils --noconfirm
-pacmanerror=$((pacmanerror + $?))
-pacman -S man --noconfirm
-pacmanerror=$((pacmanerror + $?))
-pacman -S git --noconfirm
-pacmanerror=$((pacmanerror + $?))
-mv /archinstall/SCRIPT/aurinstall.sh /usr/local/bin/aurinstall
+
 mv /archinstall/SCRIPT/mkinitcpio-editor.sh /usr/local/bin/mkinitcpio-editor
 sed -i 's/^#\(fr_FR.UTF-8\s*UTF-8\)/\1/' /etc/locale.gen
 locale-gen
@@ -34,15 +31,15 @@ echo "Nom d'utisateur :"
 x=10
 while [ $x != 0 ]
 do
-    read nomutilisateur
-    useradd -m -g users -G wheel $nomutilisateur
+    read -r nomutilisateur
+    useradd -m -g users -G wheel "$nomutilisateur"
     x=$?
 done
 echo "Mot de passe utiliateur :"
 x=10
 while [ $x != 0 ]
 do
-    passwd $nomutilisateur
+    passwd "$nomutilisateur"
     x=$?
 done
 
@@ -53,9 +50,9 @@ mkdir /etc/initcpio/acpi_override
 cp /archinstall/CONFIG/ssdt1.aml /etc/initcpio/acpi_override
 
 hooksvar=$(grep -v  -n "^#" /etc/mkinitcpio.conf | grep 'HOOKS=')
-ligne=$(echo ${hooksvar%:*}) 
-sed -i "$(($ligne)) d" /etc/mkinitcpio.conf
-sed -i "$(($ligne-1)) a HOOKS=(systemd autodetect modconf block keyboard sd-vconsole filesystems fsck acpi_override)" /etc/mkinitcpio.conf
+ligne="${hooksvar%:*}"
+sed -i "$((ligne)) d" /etc/mkinitcpio.conf
+sed -i "$((ligne-1)) a HOOKS=(systemd autodetect modconf block keyboard sd-vconsole filesystems fsck acpi_override)" /etc/mkinitcpio.conf
 
 # Tweaks
 echo "vm.swappiness=2
@@ -66,7 +63,7 @@ vm.vfs_cache_pressure=50" | tee /etc/sysctl.d/99-ramtweaks.conf
 mkinitcpio-editor -a xe lz4
 pacman -S efibootmgr intel-ucode --noconfirm
 pacmanerror=$((pacmanerror + $?))
-PARTUUIDGREP=$(cat /etc/fstab | grep "/ " | cut -f 1 -d " ")
+PARTUUIDGREP=$(awk '$2 == "/" {print $1}' /etc/fstab)
 bootctl install
 echo "default  arch.conf
 timeout  6
@@ -101,4 +98,4 @@ else
     echo "There was an error in one or more pacman installations."
 fi
 
-read -p "Press any key to continue..."
+read -r -p "Press any key to continue..."

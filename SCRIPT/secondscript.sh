@@ -1,16 +1,19 @@
 #!/bin/bash
+
+# Exit on any error, undefined variables, and pipe failures
+set -euo pipefail
+
 x=10
-ping -c 5 google.com
-if [ $? = "0" ]; then
+if ping -c 5 google.com; then
     x=0
 fi
 while [ $x != 0 ]
 do
 	sudo nmcli device wifi list
     echo -e "\n\n\n\nSSID :"
-    read SSID
+    read -r SSID
     echo "Password :"
-    read PASSWORD
+    read -r PASSWORD
     sudo nmcli device wifi connect "$SSID" password "$PASSWORD"
     t=$?
     sleep 10
@@ -31,8 +34,8 @@ x=10
 while [ $x != 0 ]
 do
     echo "Nom Machine :"
-    read hostnamevar
-    sudo hostnamectl set-hostname $hostnamevar
+    read -r hostnamevar
+    sudo hostnamectl set-hostname "$hostnamevar"
     x=$?
 done
 
@@ -45,7 +48,12 @@ sudo pacman -Syu --noconfirm
 pacmanerror=$((pacmanerror + $?))
 
 #Yay
-aurinstall yay --noconfirm --skippgpcheck
+cd /tmp || exit 1
+git clone https://aur.archlinux.org/yay.git
+cd yay || exit 1
+makepkg -si --noconfirm 
+
+cd ~ || exit 1
 yay -Syu --noconfirm
 
 
@@ -61,14 +69,13 @@ pacmanerror=$((pacmanerror + $?))
 sudo pacman -S xorg-server xorg-apps xorg-xwayland xorg-xlsclients --noconfirm
 pacmanerror=$((pacmanerror + $?))
 
-# Intel
-
-sudo pacman -S mesa lib32-mesa mesa-utils intel-media-driver libva-utils --noconfirm
+# Graphics support for Intel
+sudo pacman -S mesa lib32-mesa mesa-utils intel-media-driver libva-utils \
+    vulkan-icd-loader lib32-vulkan-icd-loader vulkan-intel lib32-vulkan-intel \
+    vulkan-mesa-layers lib32-vulkan-mesa-layers --noconfirm
 pacmanerror=$((pacmanerror + $?))
-sudo pacman -S vulkan-icd-loader lib32-vulkan-icd-loader vulkan-intel lib32-vulkan-intel vulkan-mesa-layers lib32-vulkan-mesa-layers --noconfirm
-pacmanerror=$((pacmanerror + $?))
 
-#NVIDIA
+# Graphics support for NVIDIA
 
 sudo pacman -S nvidia-open nvidia-utils lib32-nvidia-utils nvidia-settings libxnvctrl nvidia-prime --noconfirm
 pacmanerror=$((pacmanerror + $?))
@@ -100,22 +107,21 @@ sudo pacman -S bluez bluez-utils --noconfirm
 pacmanerror=$((pacmanerror + $?))
 sudo systemctl enable bluetooth.service
 
-# Son
-
-sudo pacman -S alsa-utils alsa-plugins alsa-firmware sof-firmware alsa-ucm-conf --noconfirm
+# Audio system and opti
+sudo pacman -S alsa-utils alsa-plugins alsa-firmware sof-firmware alsa-ucm-conf \
+    pipewire lib32-pipewire wireplumber pipewire-alsa pipewire-pulse pamixer \
+    pipewire-jack lib32-pipewire-jack --noconfirm
 pacmanerror=$((pacmanerror + $?))
-sudo pacman -S pipewire lib32-pipewire wireplumber pipewire-alsa pipewire-pulse pamixer pipewire-jack lib32-pipewire-jack --noconfirm
-pacmanerror=$((pacmanerror + $?))
-sudo usermod -a -G audio $USER
+sudo usermod -a -G audio "$USER"
 echo "high-priority = yes
 nice-level = -11
 
 realtime-scheduling = yes
 realtime-priority = 5" | sudo tee /etc/pulse/daemon.conf
 
-# Imprimante
-
-sudo pacman -S cups cups-pdf avahi nss-mdns ghostscript gsfonts foomatic-db-engine foomatic-db foomatic-db-ppds gutenprint foomatic-db-gutenprint-ppds usbutils --noconfirm
+# Printing support
+sudo pacman -S cups cups-pdf avahi nss-mdns ghostscript gsfonts foomatic-db-engine \
+    foomatic-db foomatic-db-ppds gutenprint foomatic-db-gutenprint-ppds usbutils --noconfirm
 pacmanerror=$((pacmanerror + $?))
 
 sudo systemctl enable avahi-daemon.service
@@ -124,9 +130,10 @@ sudo sed -i 's/resolve/mdns_minimal [NOTFOUND=return] resolve/g' /etc/nsswitch.c
 
 sudo systemctl enable cups.socket
 
-# Gnome
-
-sudo pacman -S dmidecode gnome gnome-tweaks gnome-shell-extensions xdg-desktop-portal xdg-desktop-portal-gnome power-profiles-daemon gnome-themes-standard --noconfirm
+# GNOME desktop environment
+sudo pacman -S dmidecode gnome gnome-tweaks gnome-shell-extensions \
+    xdg-desktop-portal xdg-desktop-portal-gnome power-profiles-daemon \
+    gnome-themes-standard --noconfirm
 pacmanerror=$((pacmanerror + $?))
 yay -S ttf-firacode ttf-dejavu reversal-icon-theme-git --noconfirm
 yayerror=$((yayerror + $?))
@@ -150,15 +157,15 @@ pacmanerror=$((pacmanerror + $?))
 sudo cp -r /archinstall/SCRIPT/ACPID/* /etc/acpi
 sudo systemctl enable --now acpid.service
 
-# QEMU + KVM
-
+# QEMU/KVM virtualization
 echo "softdep nvidia pre: vfio-pci" | sudo tee /etc/modprobe.d/vfio.conf
-sudo pacman -S qemu-full qemu-img libvirt virt-install virt-manager virt-viewer edk2-ovmf dnsmasq swtpm guestfs-tools libosinfo --noconfirm
+sudo pacman -S qemu-full qemu-img libvirt virt-install virt-manager virt-viewer \
+    edk2-ovmf dnsmasq swtpm guestfs-tools libosinfo --noconfirm
 pacmanerror=$((pacmanerror + $?))
 sudo mkinitcpio-editor -a kvm kvm_intel virtio virtio_blk virtio_pci virtio_net vfio_iommu_type1
 sudo systemctl enable libvirtd.service
 echo "options kvm_intel nested=1" | sudo tee /etc/modprobe.d/kvm-intel.conf
-sudo usermod -aG libvirt $USER
+sudo usermod -aG libvirt "$USER"
 echo 'export LIBVIRT_DEFAULT_URI="qemu:///system"' >> ~/.bashrc
 echo 'export LIBVIRT_DEFAULT_URI="qemu:///system"' >> ~/.zshrc 
 sudo setfacl -R -b /var/lib/libvirt/images/
@@ -186,9 +193,9 @@ pacmanerror=$((pacmanerror + $?))
 sudo systemctl enable fstrim.timer
 
 
-# Applications utiles
-
-sudo pacman -S speech-dispatcher libreoffice-still-fr file-roller zip unzip p7zip unrar python-pip tk gimp bolt hunspell-fr noto-fonts-emoji --noconfirm
+# Essential applications
+sudo pacman -S speech-dispatcher libreoffice-still-fr file-roller zip unzip p7zip \
+    unrar python-pip tk gimp bolt hunspell-fr noto-fonts-emoji --noconfirm
 pacmanerror=$((pacmanerror + $?))
 yay -S vscodium-bin --noconfirm
 yayerror=$((yayerror + $?))
@@ -199,14 +206,9 @@ yayerror=$((yayerror + $?))
 yay -S mullvad-vpn-bin qbittorrent --noconfirm
 yayerror=$((yayerror + $?))
 
-# Support connection USB Android
-
-sudo pacman -S mtpfs --noconfirm
-pacmanerror=$((pacmanerror + $?))
-yay -S jmtpfs --noconfirm
-yayerror=$((yayerror + $?))
-
-sudo pacman -S gvfs-mtp gvfs-gphoto2 --noconfirm
+# Android file system support (grouped)
+sudo pacman -S mtpfs gvfs-mtp gvfs-gphoto2 libmtp --noconfirm
+sudo usermod -a -G adbusers "$USER"
 pacmanerror=$((pacmanerror + $?))
 
 # Creation des repertoires utilisateurs
@@ -229,13 +231,11 @@ cat /archinstall/CONFIG/.zshrc > ~/.zshrc
 cat /archinstall/CONFIG/.p10k.zsh > ~/.p10k.zsh
 
 # Nano Color + tricks
-
-cat /archinstall/CONFIG/nanorc | sudo tee /etc/nanorc
+sudo cat /archinstall/CONFIG/nanorc | sudo tee /etc/nanorc > /dev/null
 
 # Fix group
-
-sudo usermod -a -G sys $USER
-sudo usermod -a -G lp $USER
+sudo usermod -a -G sys "$USER"
+sudo usermod -a -G lp "$USER"
 
 # Fix power
 
@@ -306,18 +306,17 @@ sudo systemctl enable nvidia-oc.service
 # /data permission
 if [ -d /data ]; then
     sudo groupadd datausers
-    sudo usermod -aG datausers $USER
+    sudo usermod -aG datausers "$USER"
     sudo chown root:datausers /data
     sudo chmod 775 /data
     sudo chmod g+s /data
 fi
 
 # Fix lid
-
 varlidline=$(sudo grep -n '#HoldoffTimeoutSec' /etc/systemd/logind.conf)
-ligne4=$(echo ${varlidline%:*})
-sudo sed -i "$(($ligne4)) d" /etc/systemd/logind.conf
-sudo sed -i "$(($ligne4-1)) a HoldoffTimeoutSec=10s" /etc/systemd/logind.conf
+ligne4="${varlidline%:*}"
+sudo sed -i "$((ligne4)) d" /etc/systemd/logind.conf
+sudo sed -i "$((ligne4-1)) a HoldoffTimeoutSec=10s" /etc/systemd/logind.conf
 
 # Wayland support enable 
 
@@ -335,20 +334,24 @@ __EGL_VENDOR_LIBRARY_FILENAMES=/usr/share/glvnd/egl_vendor.d/50_mesa.json
 __GLX_VENDOR_LIBRARY_NAME=mesa
 GAMEMODERUNEXEC="env vblank_mode=0 LD_BIND_NOW=1 __NV_PRIME_RENDER_OFFLOAD=1 __EGL_VENDOR_LIBRARY_FILENAMES=/usr/share/glvnd/egl_vendor.d/10_nvidia.json __GLX_VENDOR_LIBRARY_NAME=nvidia __VK_LAYER_NV_optimus=NVIDIA_only"' | sudo tee -a /etc/environment
 
-# Steam + Optis
-
-sudo pacman -S steam prismlauncher ttf-liberation lib32-fontconfig --noconfirm
+# Gaming support
+sudo pacman -S steam prismlauncher ttf-liberation lib32-fontconfig \
+    gamemode lib32-gamemode --noconfirm
 pacmanerror=$((pacmanerror + $?))
 yay -S ttf-ms-win11-auto --noconfirm
 yayerror=$((yayerror + $?))
 
 
-echo '#!/bin/sh
+sudo tee /usr/local/bin/setpci-latency.sh > /dev/null << 'EOF'
+#!/bin/sh
 # Set PCI latency timers
 setpci -v -s '*:*' latency_timer=20
 setpci -v -s '0:0' latency_timer=0
-setpci -v -d "*:*:04xx" latency_timer=80' | sudo tee /usr/local/bin/setpci-latency.sh
+setpci -v -d "*:*:04xx" latency_timer=80
+EOF
+
 sudo chmod +x /usr/local/bin/setpci-latency.sh
+
 
 echo "[Unit]
 Description=Set PCI Device Latency Timers
@@ -382,10 +385,7 @@ sudo chmod 700 /usr/local/bin/msi-coolerbooster
 echo "%wheel ALL=(root) NOPASSWD: /usr/local/bin/msi-coolerbooster" | sudo tee -a /etc/sudoers
 
 #Gamemode
-
-sudo pacman -S gamemode lib32-gamemode --noconfirm
-pacmanerror=$((pacmanerror + $?))
-sudo usermod -a -G gamemode $USER
+sudo usermod -a -G gamemode "$USER"
 
 echo '[general]
 ; The reaper thread will check every 5 seconds for exited clients, for config file changes, and for the CPU/iGPU power balance
@@ -508,16 +508,15 @@ end=notify-send "GameMode ended"
 ;script_timeout=10' | sudo tee /etc/gamemode.ini
 
 # Looking-glass
-
-cd /tmp
+cd /tmp || exit 1
 curl --connect-timeout 10 --retry 10 --retry-delay 10 https://looking-glass.io/artifact/B7/source --output lookinglass.tar.xz
 tar -xf lookinglass.tar.xz
-cd /tmp/looking-glass-B7
+cd /tmp/looking-glass-B7 || exit 1
 mkdir client/build
-cd client/build
+cd client/build || exit 1
 cmake -DENABLE_X11=no -DENABLE_LIBDECOR=ON ../
 sudo make install
-cd /tmp/looking-glass-B7/module/
+cd /tmp/looking-glass-B7/module/ || exit 1
 sudo dkms install "."
 echo "options kvmfr static_size_mb=64" | sudo tee /etc/modprobe.d/kvmfr.conf
 echo "kvmfr" | sudo tee /etc/modules-load.d/kvmfr.conf
@@ -549,7 +548,6 @@ sudo sed -i 's/^CriticalPowerAction=HybridSleep$/CriticalPowerAction=PowerOff/' 
 
 # delete useless tools
 sudo rm -rf /archinstall
-sudo rm /usr/local/bin/aurinstall
 sudo rm /usr/local/bin/mkinitcpio-editor
 
 # disable root login
@@ -570,7 +568,7 @@ else
     echo "There was an error in one or more pacman installations."
 fi
 
-read -p "Press any key to continue..."
+read -r -p "Press any key to continue..."
 
 yay -Scc --noconfirm
 yes | LANG=C sudo pacman -Scc
