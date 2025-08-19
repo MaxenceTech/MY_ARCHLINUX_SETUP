@@ -25,11 +25,8 @@ do
     iwctl station wlan0 connect "$SSID" --passphrase="$PASSWORD"
     t=$?
     sleep 10
-    if ping -c 5 google.com; then
-        x=0
-    else
-        x=$?
-    fi
+    ping -c 5 google.com 
+    x=$?
     if [ $t != 0 ]; then
         echo -e "\n\n\nNot connected !\n\n\n"
     elif [ $x != 0 ]; then
