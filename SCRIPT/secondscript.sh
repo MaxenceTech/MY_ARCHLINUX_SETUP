@@ -69,13 +69,13 @@ pacmanerror=$((pacmanerror + $?))
 sudo pacman -S xorg-server xorg-apps xorg-xwayland xorg-xlsclients --noconfirm
 pacmanerror=$((pacmanerror + $?))
 
-# Graphics and Vulkan support (grouped)
+# Graphics support for Intel
 sudo pacman -S mesa lib32-mesa mesa-utils intel-media-driver libva-utils \
     vulkan-icd-loader lib32-vulkan-icd-loader vulkan-intel lib32-vulkan-intel \
     vulkan-mesa-layers lib32-vulkan-mesa-layers --noconfirm
 pacmanerror=$((pacmanerror + $?))
 
-#NVIDIA
+# Graphics support for NVIDIA
 
 sudo pacman -S nvidia-open nvidia-utils lib32-nvidia-utils nvidia-settings libxnvctrl nvidia-prime --noconfirm
 pacmanerror=$((pacmanerror + $?))
