@@ -334,7 +334,7 @@ __EGL_VENDOR_LIBRARY_FILENAMES=/usr/share/glvnd/egl_vendor.d/50_mesa.json
 __GLX_VENDOR_LIBRARY_NAME=mesa
 GAMEMODERUNEXEC="env vblank_mode=0 LD_BIND_NOW=1 __NV_PRIME_RENDER_OFFLOAD=1 __EGL_VENDOR_LIBRARY_FILENAMES=/usr/share/glvnd/egl_vendor.d/10_nvidia.json __GLX_VENDOR_LIBRARY_NAME=nvidia __VK_LAYER_NV_optimus=NVIDIA_only"' | sudo tee -a /etc/environment
 
-# Gaming support (grouped)
+# Gaming support
 sudo pacman -S steam prismlauncher ttf-liberation lib32-fontconfig \
     gamemode lib32-gamemode --noconfirm
 pacmanerror=$((pacmanerror + $?))
