@@ -553,9 +553,6 @@ sudo rm /usr/local/bin/mkinitcpio-editor
 # disable root login
 sudo passwd --lock root
 
-# Restore pacman default download
-sudo sed -i '/^XferCommand = \/usr\/bin\/curl/ s/^/#/' /etc/pacman.conf
-
 if [ "$yayerror" -eq 0 ]; then
     echo "Every yay installation occurred without error."
 else
