@@ -121,7 +121,7 @@ tee /etc/pacman.conf < CONFIG/pacman.conf
 
 pacstrap /mnt base linux linux-headers linux-firmware
 
-if pacstrap /mnt base linux linux-headers linux-firmware; then
+if [ "$?" -eq 0 ]; then
     echo "pacstrap installation occurred without error."
 else
     echo "pacstrap installation occurred with error."
