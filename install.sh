@@ -94,7 +94,7 @@ elif [ "$nvme_count" -eq 1 ]; then
     echo "Single NVMe disk detected: $disk1"
     
     # Partition single disk: EFI + Swap + Root
-    sgdisk -Z /dev/nvme0n1
+    sgdisk -Z "$disk1"
     sgdisk -n 1:0:+2G -t 1:ef00 "$disk1"    # EFI partition
     sgdisk -n 2:0:+8G -t 2:8200 "$disk1"    # Swap partition
     sgdisk -n 3:0:0 -t 3:8300 "$disk1"      # Root partition
