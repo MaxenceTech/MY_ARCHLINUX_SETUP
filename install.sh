@@ -13,8 +13,6 @@
 # Exit on any error, undefined variables, and pipe failures
 set -euo pipefail
 
-sleep 60
-
 # Set French keyboard layout
 loadkeys fr-pc
 
@@ -76,6 +74,8 @@ for disk in /dev/nvme*n1; do
   echo "Sanitizing $disk..."
   nvme sanitize "$disk" -a 0x02
 done
+
+sleep 60
 
 #==============================================================================
 # DISK PARTITIONING AND FILESYSTEM SETUP
