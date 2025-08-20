@@ -624,6 +624,8 @@ fi
 
 read -r -p "Press any key to continue..."
 
+set +euo pipefail
+
 yay -Scc --noconfirm
 yes | LANG=C sudo pacman -Scc
 go clean -cache
