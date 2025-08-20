@@ -180,7 +180,7 @@ initrd  /initramfs-linux-fallback.img
 options root=$PARTUUIDGREP rw quiet mitigations=auto,nosmt nowatchdog tsc=reliable clocksource=tsc intel_iommu=on iommu=pt vfio-pci.ids=10de:27a0,10de:22bc vt.global_cursor_default=0 zswap.enabled=1 zswap.shrinker_enabled=1 zswap.compressor=lz4 zswap.max_pool_percent=12 zswap.zpool=zsmalloc" | tee /boot/loader/entries/fallback-arch-gpupasstrough.conf
 
 # Update bootloader and enable automatic updates
-bootctl update | echo "Bypass, error excepted"
+bootctl update || echo "Bypass, error excepted"
 systemctl enable systemd-boot-update.service
 
 #==============================================================================
