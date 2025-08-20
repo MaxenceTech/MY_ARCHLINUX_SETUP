@@ -13,27 +13,6 @@
 # Exit on any error, undefined variables, and pipe failures
 set -euo pipefail
 
-#==============================================================================
-# CLEANUP AND PREPARATION
-#==============================================================================
-
-# Cleanup any existing mounts (ignore errors if not mounted)
-
-for mount in $(mount | grep '/dev/nvme' | cut -d' ' -f1); do
-  echo "Unmounting $mount"
-  sudo umount $mount 2>/dev/null || true
-done
-
-for swap in $(cat /proc/swaps | grep '/dev/nvme' | cut -d' ' -f1); do
-  echo "Disabling swap on $swap"
-  sudo swapoff $swap 2>/dev/null || true
-done
-
-for disk in /dev/nvme*n1; do
-  echo "Sanitizing $disk..."
-  nvme sanitize "$disk" -a 0x02
-done
-
 sleep 60
 
 # Set French keyboard layout
@@ -75,6 +54,27 @@ do
     elif [ $x != 0 ]; then
         echo -e "\n\n\nConnected but no network !\n\n\n"
     fi
+done
+
+#==============================================================================
+# CLEANUP AND PREPARATION
+#==============================================================================
+
+# Cleanup any existing mounts (ignore errors if not mounted)
+
+for mount in $(mount | grep '/dev/nvme' | cut -d' ' -f1); do
+  echo "Unmounting $mount"
+  sudo umount $mount 2>/dev/null || true
+done
+
+for swap in $(cat /proc/swaps | grep '/dev/nvme' | cut -d' ' -f1); do
+  echo "Disabling swap on $swap"
+  sudo swapoff $swap 2>/dev/null || true
+done
+
+for disk in /dev/nvme*n1; do
+  echo "Sanitizing $disk..."
+  nvme sanitize "$disk" -a 0x02
 done
 
 #==============================================================================
