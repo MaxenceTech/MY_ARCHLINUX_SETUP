@@ -368,7 +368,7 @@ if [ -d /data ]; then
     sudo chmod 775 /data
     sudo chmod g+s /data
 fi
-echo "file:///etc Etc" >> ~/.config/gtk-3.0/bookmarks
+#echo "file:///etc Etc" >> ~/.config/gtk-3.0/bookmarks
 
 # Fix lid
 varlidline=$(sudo grep -n '#HoldoffTimeoutSec' /etc/systemd/logind.conf)
