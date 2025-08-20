@@ -217,5 +217,5 @@ arch-chroot /mnt bash /archinstall/SCRIPT/firstscript.sh
 #==============================================================================
 
 # Unmount all filesystems and reboot
-umount -a
+umount -a 2>/dev/null || true
 reboot
