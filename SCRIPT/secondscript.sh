@@ -279,19 +279,11 @@ yayerror=$((yayerror + $?))
 
 # ZSH plugins installation with error handling
 echo "Installing ZSH plugins..."
-sudo mkdir -p /usr/share/zsh/plugins/plugins_sudo_zsh
-if ! sudo wget --timeout=30 --tries=3 \
-    https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/plugins/sudo/sudo.plugin.zsh \
-    -O /usr/share/zsh/plugins/plugins_sudo_zsh/zsh_sudo_plugin.zsh; then
-    echo "Warning: Failed to download sudo plugin"
-fi
+sudo mkdir /usr/share/zsh/plugins/plugins_sudo_zsh
+sudo wget https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/plugins/sudo/sudo.plugin.zsh -O /usr/share/zsh/plugins/plugins_sudo_zsh/zsh_sudo_plugin.zsh
 
-sudo mkdir -p /usr/share/zsh/plugins/colored-man-pages
-if ! sudo wget --timeout=30 --tries=3 \
-    https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/plugins/colored-man-pages/colored-man-pages.plugin.zsh \
-    -O /usr/share/zsh/plugins/colored-man-pages/colored-man-pages.plugin.zsh; then
-    echo "Warning: Failed to download colored-man-pages plugin"
-fi
+sudo mkdir /usr/share/zsh/plugins/colored-man-pages
+sudo wget https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/plugins/colored-man-pages/colored-man-pages.plugin.zsh -O /usr/share/zsh/plugins/colored-man-pages/colored-man-pages.plugin.zsh
 
 cat /archinstall/CONFIG/.zshrc > ~/.zshrc
 cat /archinstall/CONFIG/.p10k.zsh > ~/.p10k.zsh
