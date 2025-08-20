@@ -79,7 +79,6 @@ echo "127.0.0.1 localhost
 
 # Initialize error tracking for package installations
 pacmanerror=0
-yayerror=0
 
 #==============================================================================
 # SYSTEM UPDATE
