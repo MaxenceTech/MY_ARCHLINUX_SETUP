@@ -126,7 +126,7 @@ pacmanerror=$((pacmanerror + $?))
 
 # Install Intel graphics drivers
 echo "Installing Intel graphics drivers..."
-sudo pacman -S mesa lib32-mesa mesa-utils intel-media-driver libva-utils \
+sudo pacman -S mesa lib32-mesa mesa-utils intel-media-driver libva-utils libvpl vpl-gpu-rt \
     vulkan-icd-loader lib32-vulkan-icd-loader vulkan-intel lib32-vulkan-intel \
     vulkan-mesa-layers lib32-vulkan-mesa-layers --noconfirm
 pacmanerror=$((pacmanerror + $?))
