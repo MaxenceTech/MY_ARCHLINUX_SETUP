@@ -48,6 +48,7 @@ systemctl enable NetworkManager
 
 # Install custom mkinitcpio editor utility
 mv /archinstall/SCRIPT/mkinitcpio-editor.sh /usr/local/bin/mkinitcpio-editor
+chmod +x /usr/local/bin/mkinitcpio-editor
 
 #==============================================================================
 # LOCALE AND KEYBOARD CONFIGURATION
