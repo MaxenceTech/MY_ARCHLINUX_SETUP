@@ -211,6 +211,8 @@ yayerror=$((yayerror + $?))
 sudo pacman -S acpid --noconfirm
 pacmanerror=$((pacmanerror + $?))
 sudo cp -r /archinstall/SCRIPT/ACPID/* /etc/acpi
+sudo chmod +x /etc/acpi/handler.sh
+sudo chmod +x /etc/acpi/SCRIPT/*
 sudo systemctl enable --now acpid.service
 
 # QEMU/KVM virtualization
