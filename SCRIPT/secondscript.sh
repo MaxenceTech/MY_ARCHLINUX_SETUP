@@ -230,6 +230,9 @@ sudo setfacl -R -b /var/lib/libvirt/images/
 sudo setfacl -R -m "u:${USER}:rwX" /var/lib/libvirt/images/
 sudo setfacl -m "d:u:${USER}:rwx" /var/lib/libvirt/images/
 
+mkdir ~/Templates
+cat /archinstall/CONFIG/libvirt-config-windows11.xml > ~/Templates/libvirt-config-windows11.xml
+
 # Fix keyboard layout
 sudo localectl set-x11-keymap fr
 
