@@ -5,16 +5,16 @@
   <qemu:arg value="-object"/>
   <qemu:arg value="{'qom-type':'memory-backend-file','id':'looking-glass','mem-path':'/dev/kvmfr0','size':67108864,'share':true}"/>
 </qemu:commandline>
-  <name>win11-gaming-thp-24576</name>
+  <name>win11-gaming-thp-32768</name>
   <uuid>d8cdcabf-2082-4a11-9484-883e5257945d</uuid>
   <title>Win11 (Template)</title>
   <metadata>
     <libosinfo:libosinfo xmlns:libosinfo="http://libosinfo.org/xmlns/libvirt/domain/1.0">
       <libosinfo:os id="http://microsoft.com/win/11"/>
     </libosinfo:libosinfo>
-  </metadata>win11-gaming-thp-24576
-  <memory>25165824</memory>
-  <currentMemory>25165824</currentMemory>
+  </metadata>win11-gaming-thp-32768
+  <memory>33554432</memory>
+  <currentMemory>33554432</currentMemory>
   <memoryBacking>
     <hugepages/>
   </memoryBacking>
