@@ -376,7 +376,7 @@ if [ -d /data ]; then
     sudo setfacl -R -b /data/libvirt_images
     sudo setfacl -R -m "u:${USER}:rwX" /data/libvirt_images
     sudo setfacl -m "d:u:${USER}:rwx" /data/libvirt_images
-    ln -s /data ~/second-ssd-data
+    ln -s /data ~/SECOND-SDD
 fi
 
 # Fix lid
