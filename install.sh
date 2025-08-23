@@ -81,7 +81,7 @@ sleep 60
 # DISK PARTITIONING AND FILESYSTEM SETUP
 #==============================================================================
 
-nvme list
+lsblk -d -o NAME,MODEL,SIZE,TYPE | grep nvme
 
 # Discover NVMe disks
 mapfile -t nvme_disks < <(ls /dev/nvme*n1 2>/dev/null)
