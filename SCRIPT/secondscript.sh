@@ -133,7 +133,7 @@ pacmanerror=$((pacmanerror + $?))
 
 # Install NVIDIA graphics drivers
 echo "Installing NVIDIA graphics drivers..."
-sudo pacman -S nvidia-open nvidia-utils lib32-nvidia-utils nvidia-settings libxnvctrl nvidia-prime --noconfirm
+sudo pacman -S nvidia-open nvidia-utils lib32-nvidia-utils nvidia-settings libxnvctrl --noconfirm
 pacmanerror=$((pacmanerror + $?))
 
 echo '# Enable runtime PM for NVIDIA VGA/3D controller devices on adding device
@@ -160,6 +160,12 @@ yay -S  ncurses5-compat-libs --noconfirm
 yayerror=$((yayerror + $?))
 
 echo "/usr/lib" | sudo tee /etc/ld.so.conf.d/00-usrlib.conf
+
+# Add custom prime-run command (with opencl support redirection)
+
+echo '#!/bin/bash
+OCL_ICD_FILENAMES=nvidia.icd:intel.icd __NV_PRIME_RENDER_OFFLOAD=1 __EGL_VENDOR_LIBRARY_FILENAMES=/usr/share/glvnd/egl_vendor.d/10_nvidia.json __GLX_VENDOR_LIBRARY_NAME=nvidia __VK_LAYER_NV_optimus=NVIDIA_only "$@"' | sudo tee /usr/local/bin/prime-run
+sudo chmod 755 /usr/local/bin/prime-run
 
 # Dbus
 
