@@ -152,6 +152,15 @@ echo 'options nvidia "NVreg_DynamicPowerManagement=0x03" NVreg_UsePageAttributeT
 
 sudo systemctl enable nvidia-powerd.service
 
+# Add OpenCL Support
+
+sudo pacman -S clinfo opencl-nvidia lib32-opencl-nvidia cuda intel-compute-runtime ocl-icd opencl-headers --noconfirm
+pacmanerror=$((pacmanerror + $?))
+yay -S  ncurses5-compat-libs --noconfirm
+yayerror=$((yayerror + $?))
+
+echo "/usr/lib" | sudo tee /etc/ld.so.conf.d/00-usrlib.conf
+
 # Dbus
 
 sudo pacman -S dbus --noconfirm
@@ -397,7 +406,8 @@ CLUTTER_BACKEND=wayland
 SDL_VIDEODRIVER="wayland,x11"
 XDG_SESSION_TYPE=wayland
 GSK_RENDERER=ngl
-GAMEMODERUNEXEC="env vblank_mode=0 LD_BIND_NOW=1 __NV_PRIME_RENDER_OFFLOAD=1 __EGL_VENDOR_LIBRARY_FILENAMES=/usr/share/glvnd/egl_vendor.d/10_nvidia.json __GLX_VENDOR_LIBRARY_NAME=nvidia __VK_LAYER_NV_optimus=NVIDIA_only"' | sudo tee -a /etc/environment
+OCL_ICD_FILENAMES=intel.icd:nvidia.icd
+GAMEMODERUNEXEC="env vblank_mode=0 LD_BIND_NOW=1 OCL_ICD_FILENAMES=nvidia.icd:intel.icd __NV_PRIME_RENDER_OFFLOAD=1 __EGL_VENDOR_LIBRARY_FILENAMES=/usr/share/glvnd/egl_vendor.d/10_nvidia.json __GLX_VENDOR_LIBRARY_NAME=nvidia __VK_LAYER_NV_optimus=NVIDIA_only"' | sudo tee -a /etc/environment
 
 # Gaming support
 sudo pacman -S steam prismlauncher ttf-liberation lib32-fontconfig \
