@@ -320,14 +320,27 @@ echo '#!/bin/bash
 
 # Read the value from /sys/class/power_supply/ADP1/online
 online_status=$(cat /sys/class/power_supply/ADP1/online)
+gamemodeout="$(LANG=C gamemoded -s 2>/dev/null || true)"
+
+if echo "$gamemodeout" | grep -wiq "active"; then
+    gamemodestatus=1   # actif
+else   
+    gamemodestatus=0  # inactif
+fi
+
 
 # Check the value and run different scripts based on it
-if [ "$online_status" -eq 1 ] || [ "$1" = "-g" ]; then
+if [ "$online_status" -eq 0 ]; then
+    if [ "$gamemodestatus" -eq 1 ] || [ "$1" = "-g" ]; then
+        # Run the script for when online status is 0 (unplugged) and in (or will be in) gamemode
+        exec /etc/acpi/SCRIPT/gamemode-unplug.sh
+    else
+        # Run the script for when online status is 0 (unplugged)
+        exec /etc/acpi/SCRIPT/a-unplug.sh
+    fi
+else
     # Run the script for when online status is 1 (plugged in)
     exec /etc/acpi/SCRIPT/a-plug.sh
-else
-    # Run the script for when online status is 0 (unplugged)
-    exec /etc/acpi/SCRIPT/a-unplug.sh
 fi
 ' | sudo tee /usr/local/bin/power-detect 
 sudo chmod 700 /usr/local/bin/power-detect
