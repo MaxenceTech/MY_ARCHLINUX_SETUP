@@ -320,7 +320,7 @@ echo '#!/bin/bash
 
 # Read the value from /sys/class/power_supply/ADP1/online
 online_status=$(cat /sys/class/power_supply/ADP1/online)
-gamemodeout="$(LANG=C gamemoded -s 2>/dev/null || true)"
+gamemodeout="$(runuser -l "$(last | cut -f 1 -d " " | sed "1p;d")" -c "LANG=C gamemoded -s")"
 
 if echo "$gamemodeout" | grep -wiq "active"; then
     gamemodestatus=1   # actif
