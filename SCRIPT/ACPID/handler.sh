@@ -13,16 +13,7 @@ case "$1" in
     ac_adapter)
         case "$2" in
             ACPI0003:00)
-                case "$4" in
-                    00000000)
-                        # AC adapter disconnected - switch to power saving mode
-                        /etc/acpi/SCRIPT/a-unplug.sh
-                        ;;
-                    00000001)
-                        # AC adapter connected - switch to performance mode
-                        /etc/acpi/SCRIPT/a-plug.sh
-                        ;;
-                esac
+                /usr/local/bin/power-detect
                 ;;
             *)
                 logger "ACPI action undefined: $2"
