@@ -322,7 +322,7 @@ echo '#!/bin/bash
 online_status=$(cat /sys/class/power_supply/ADP1/online)
 
 # Check the value and run different scripts based on it
-if [ "$online_status" -eq 1 ] || [ "$1" = "-f" ]; then
+if [ "$online_status" -eq 1 ] || [ "$1" = "-g" ]; then
     # Run the script for when online status is 1 (plugged in)
     exec /etc/acpi/SCRIPT/a-plug.sh
 else
