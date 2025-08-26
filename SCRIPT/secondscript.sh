@@ -580,7 +580,7 @@ pin_cores=yes
 [custom]
 ; Custom scripts (executed using the shell) when gamemode starts and ends
 start=notify-send "GameMode started"
-    sudo /usr/local/bin/power-detect -f
+    sudo /usr/local/bin/power-detect -g
 
 end=notify-send "GameMode ended"
     sudo /usr/local/bin/power-detect
