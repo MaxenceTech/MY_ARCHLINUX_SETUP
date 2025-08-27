@@ -15,7 +15,6 @@ powerprofilesctl set power-saver
 # Wait for system to stabilize
 sleep 5
 
-
 #Enable turno boost
 echo 0 | tee /sys/devices/system/cpu/intel_pstate/no_turbo
 
