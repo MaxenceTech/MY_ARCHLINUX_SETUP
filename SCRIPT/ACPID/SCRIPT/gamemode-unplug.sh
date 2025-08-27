@@ -10,7 +10,7 @@
 #============================================================================
 
 # Set power profile to performance mode
-powerprofilesctl set balanced
+powerprofilesctl set performance
 
 # Wait for system to stabilize
 sleep 5
