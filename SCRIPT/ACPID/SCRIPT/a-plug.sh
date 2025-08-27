@@ -9,6 +9,12 @@
 # Usage: Called automatically by ACPI handler when adapter is plugged in
 #==============================================================================
 
+# Set power profile to performance mode
+powerprofilesctl set performance
+
+# Wait for system to stabilize
+sleep 5
+
 # Configure MSI-EC for performance mode
 echo turbo | tee /sys/devices/platform/msi-ec/shift_mode
 echo auto | tee /sys/devices/platform/msi-ec/fan_mode
@@ -26,11 +32,5 @@ if [ -f /tmp/brightness-saved ]; then
     tee /sys/class/backlight/intel_backlight/brightness < /tmp/brightness-saved
 fi
 
-# Wait for system to stabilize
-sleep 5
-
 # Deblock TDP after unplug-plug
 systemctl restart nvidia-powerd.service
-
-# Set power profile to performance mode
-powerprofilesctl set performance
