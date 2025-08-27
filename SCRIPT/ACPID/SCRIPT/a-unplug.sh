@@ -9,12 +9,6 @@
 # Usage: Called automatically by ACPI handler when adapter is unplugged
 #==============================================================================
 
-# Set power profile to power saver mode
-powerprofilesctl set power-saver
-
-# Wait for system to stabilize
-sleep 5
-
 #Enable turno boost
 echo 0 | tee /sys/devices/system/cpu/intel_pstate/no_turbo
 
@@ -34,5 +28,11 @@ runuser -l "$(last | cut -f 1 -d " " | sed '1p;d')" -c 'gnome-randr modify eDP-1
 tee /tmp/brightness-saved < /sys/class/backlight/intel_backlight/brightness
 echo 22000 | tee /sys/class/backlight/intel_backlight/brightness
 
+# Wait for system to stabilize
+sleep 5
+
 # Deblock TDP after unplug-plug
 systemctl restart nvidia-powerd.service
+
+# Set power profile to power saver mode
+powerprofilesctl set power-saver
