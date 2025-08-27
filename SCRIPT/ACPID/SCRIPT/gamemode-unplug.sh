@@ -24,7 +24,7 @@ echo auto | tee /sys/devices/platform/msi-ec/fan_mode
 
 # Set CPU governors to performance mode
 echo performance| tee /sys/devices/system/cpu/cpu*/cpufreq/scaling_governor
-echo balance_power | tee /sys/devices/system/cpu/cpu*/cpufreq/energy_performance_preference
+echo balance_performance | tee /sys/devices/system/cpu/cpu*/cpufreq/energy_performance_preference
 echo 6 | tee /sys/devices/system/cpu/cpu*/power/energy_perf_bias
 
 # Switch display to lower refresh rate for power saving
