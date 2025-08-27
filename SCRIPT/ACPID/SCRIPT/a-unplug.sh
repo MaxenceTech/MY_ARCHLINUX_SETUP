@@ -28,8 +28,5 @@ echo 22000 | tee /sys/class/backlight/intel_backlight/brightness
 # Wait for system to stabilize
 sleep 5
 
-# Deblock TDP after unplug-plug
-systemctl restart nvidia-powerd.service
-
 # Set power profile to power saver mode
 powerprofilesctl set power-saver
