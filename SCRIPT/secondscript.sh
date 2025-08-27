@@ -286,6 +286,10 @@ yayerror=$((yayerror + $?))
 sudo pacman -S mtpfs gvfs-mtp gvfs-gphoto2 libmtp --noconfirm
 pacmanerror=$((pacmanerror + $?))
 
+# Android Studio
+yay -S android-studio --noconfirm
+yayerror=$((yayerror + $?))
+
 # Creation des repertoires utilisateurs
 
 sudo pacman -S xdg-user-dirs --noconfirm
