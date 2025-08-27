@@ -24,8 +24,5 @@ runuser -l "$(last | cut -f 1 -d " " | sed '1p;d')" -c 'gnome-randr modify eDP-1
 # Wait for system to stabilize
 sleep 5
 
-# Deblock TDP after unplug-plug
-systemctl restart nvidia-powerd.service
-
 # Set power profile to performance mode
 powerprofilesctl set performance
