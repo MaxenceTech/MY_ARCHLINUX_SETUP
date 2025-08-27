@@ -29,3 +29,6 @@ echo 6 | tee /sys/devices/system/cpu/cpu*/power/energy_perf_bias
 
 # Switch display to lower refresh rate for power saving
 runuser -l "$(last | cut -f 1 -d " " | sed '1p;d')" -c 'gnome-randr modify eDP-1 --mode 2560x1600@60.008'
+
+# Deblock TDP after unplug-plug
+systemctl restart nvidia-powerd.service
