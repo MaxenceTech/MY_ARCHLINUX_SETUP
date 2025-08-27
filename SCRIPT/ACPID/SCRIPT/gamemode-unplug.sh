@@ -1,13 +1,13 @@
 #!/bin/bash
 
 #==============================================================================
-# AC Adapter Plugged Script
+# AC Adapter Unplugged Script
 #==============================================================================
-# Description: Power management script executed when AC adapter is connected
-#              Switches system to high-performance mode
+# Description: Power management script executed when AC adapter is disconnected
+#              and gamemode is running
 # Author: MaxenceTech
-# Usage: Called automatically by ACPI handler when adapter is plugged in
-#==============================================================================
+# Usage: Called automatically by ACPI handler when adapter is unplugged
+#============================================================================
 
 # Set power profile to performance mode
 powerprofilesctl set balanced
