@@ -33,3 +33,6 @@ runuser -l "$(last | cut -f 1 -d " " | sed '1p;d')" -c 'gnome-randr modify eDP-1
 # Save current brightness and reduce it for battery conservation
 tee /tmp/brightness-saved < /sys/class/backlight/intel_backlight/brightness
 echo 22000 | tee /sys/class/backlight/intel_backlight/brightness
+
+# Deblock TDP after unplug-plug
+systemctl restart nvidia-powerd.service
