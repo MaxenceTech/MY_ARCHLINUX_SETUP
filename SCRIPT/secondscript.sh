@@ -148,7 +148,7 @@ ACTION=="bind", SUBSYSTEM=="pci", ATTR{vendor}=="0x10de", ATTR{class}=="0x030200
 ACTION=="unbind", SUBSYSTEM=="pci", ATTR{vendor}=="0x10de", ATTR{class}=="0x030000", TEST=="power/control", ATTR{power/control}="on"
 ACTION=="unbind", SUBSYSTEM=="pci", ATTR{vendor}=="0x10de", ATTR{class}=="0x030200", TEST=="power/control", ATTR{power/control}="on"' | sudo tee /etc/udev/rules.d/90-prime-powermanagement.rules
 
-echo 'options nvidia "NVreg_DynamicPowerManagement=0x03" NVreg_UsePageAttributeTable=1' | sudo tee /etc/modprobe.d/nvidia.conf
+echo 'options nvidia "NVreg_DynamicPowerManagement=0x03" NVreg_UsePageAttributeTable=1' | sudo tee /etc/modprobe.d/80-nvidia.conf
 
 sudo systemctl enable nvidia-powerd.service
 
@@ -231,13 +231,13 @@ sudo chmod +x /etc/acpi/SCRIPT/*
 sudo systemctl enable --now acpid.service
 
 # QEMU/KVM virtualization
-echo "softdep nvidia pre: vfio-pci" | sudo tee /etc/modprobe.d/vfio.conf
+echo "softdep nvidia pre: vfio-pci" | sudo tee /etc/modprobe.d/30-vfio.conf
 sudo pacman -S qemu-full qemu-img libvirt virt-install virt-manager virt-viewer \
     edk2-ovmf dnsmasq swtpm guestfs-tools libosinfo --noconfirm
 pacmanerror=$((pacmanerror + $?))
 sudo mkinitcpio-editor -a kvm kvm_intel virtio virtio_blk virtio_pci virtio_net vfio_iommu_type1
 sudo systemctl enable libvirtd.service
-echo "options kvm_intel nested=1" | sudo tee /etc/modprobe.d/kvm-intel.conf
+echo "options kvm_intel nested=1" | sudo tee /etc/modprobe.d/20-kvm-intel.conf
 sudo usermod -aG libvirt "$USER"
 echo 'export LIBVIRT_DEFAULT_URI="qemu:///system"' >> ~/.bashrc
 echo 'export LIBVIRT_DEFAULT_URI="qemu:///system"' >> ~/.zshrc 
@@ -620,7 +620,7 @@ cmake -DENABLE_X11=no -DENABLE_LIBDECOR=ON ../
 sudo make install
 cd /tmp/looking-glass-B7/module/ || exit 1
 sudo dkms install "."
-echo "options kvmfr static_size_mb=64" | sudo tee /etc/modprobe.d/kvmfr.conf
+echo "options kvmfr static_size_mb=64" | sudo tee /etc/modprobe.d/90-kvmfr.conf
 echo "kvmfr" | sudo tee /etc/modules-load.d/kvmfr.conf
 echo "SUBSYSTEM==\"kvmfr\", OWNER=\"$(whoami)\", GROUP=\"kvm\", MODE=\"0660\"" | sudo tee /etc/udev/rules.d/99-kvmfr.rules
 echo 'cgroup_device_acl = [
