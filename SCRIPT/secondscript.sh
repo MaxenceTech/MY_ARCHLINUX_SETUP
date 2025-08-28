@@ -404,11 +404,12 @@ if [ -d /data ]; then
     sudo chown root:datausers /data
     sudo chmod 775 /data
     sudo chmod g+s /data
+    sudo mkdir /data/qbittorrent
     sudo mkdir /data/libvirt_images
     sudo setfacl -R -b /data/libvirt_images
     sudo setfacl -R -m "u:${USER}:rwX" /data/libvirt_images
     sudo setfacl -m "d:u:${USER}:rwx" /data/libvirt_images
-    ln -s /data ~/SECOND-SDD
+    ln -s /data/qbittorrent ~/SSD-qBittorrent
     sudo ln -s /data/libvirt_images /var/lib/libvirt/secondssd_images
 fi
 
