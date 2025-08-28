@@ -235,7 +235,7 @@ echo "softdep nvidia pre: vfio-pci" | sudo tee /etc/modprobe.d/30-vfio.conf
 sudo pacman -S qemu-full qemu-img libvirt virt-install virt-manager virt-viewer \
     edk2-ovmf dnsmasq swtpm guestfs-tools libosinfo --noconfirm
 pacmanerror=$((pacmanerror + $?))
-sudo mkinitcpio-editor -a kvm kvm_intel virtio virtio_blk virtio_pci virtio_net vfio_iommu_type1
+sudo mkinitcpio-editor -a kvm kvm_intel virtio virtio_blk virtio_pci virtio_net vfio vfio_iommu_type1 vfio_pci
 sudo systemctl enable libvirtd.service
 echo "options kvm_intel nested=1" | sudo tee /etc/modprobe.d/20-kvm-intel.conf
 sudo usermod -aG libvirt "$USER"
