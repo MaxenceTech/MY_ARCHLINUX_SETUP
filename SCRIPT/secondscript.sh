@@ -288,8 +288,7 @@ pacmanerror=$((pacmanerror + $?))
 
 # Disable coredump
 
-echo '[Coredump]
-Storage=none
+echo 'Storage=none
 ProcessSizeMax=0' | sudo tee -a /etc/systemd/coredump.conf
 
 # Android Studio
