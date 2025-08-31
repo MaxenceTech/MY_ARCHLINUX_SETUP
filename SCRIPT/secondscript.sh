@@ -286,6 +286,12 @@ yayerror=$((yayerror + $?))
 sudo pacman -S mtpfs gvfs-mtp gvfs-gphoto2 libmtp --noconfirm
 pacmanerror=$((pacmanerror + $?))
 
+# Disable coredump
+
+echo '[Coredump]
+Storage=none
+ProcessSizeMax=0' | sudo tee /etc/systemd/coredump.conf.d/custom.conf
+
 # Android Studio
 yay -S android-studio --noconfirm
 yayerror=$((yayerror + $?))
