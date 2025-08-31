@@ -290,7 +290,7 @@ pacmanerror=$((pacmanerror + $?))
 
 echo '[Coredump]
 Storage=none
-ProcessSizeMax=0' | sudo tee /etc/systemd/coredump.conf.d/custom.conf
+ProcessSizeMax=0' | sudo tee -a /etc/systemd/coredump.conf
 
 # Android Studio
 yay -S android-studio --noconfirm
