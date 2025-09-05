@@ -405,14 +405,10 @@ nvmlInit()
 # This sets the GPU to adjust - if this gives you errors or you have multiple GPUs, set to 1 or try other values
 myGPU = nvmlDeviceGetHandleByIndex(0)
 
-nvmlDeviceSetGpuLockedClocks(myGPU, 210, 2640)
+nvmlDeviceSetGpuLockedClocks(myGPU, 210, 2280)
 
 # The GPU clock offset value should replace "000" in the line below.
 nvmlDeviceSetGpcClkVfOffset(myGPU, 220)
-
-# The memory clock offset should be **multiplied by 2** to replace the "000" below
-# For example, an offset of 500 means inserting a value of 1000 in the next line
-nvmlDeviceSetMemClkVfOffset(myGPU, 1200)
 ' | sudo tee /usr/local/bin/nvidia-oc.py
 sudo chmod +x /usr/local/bin/nvidia-oc.py
 
