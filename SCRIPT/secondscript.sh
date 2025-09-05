@@ -314,14 +314,14 @@ yayerror=$((yayerror + $?))
 sudo pacman -S mtpfs gvfs-mtp gvfs-gphoto2 libmtp --noconfirm
 pacmanerror=$((pacmanerror + $?))
 
+# Android Studio
+yay -S android-studio --noconfirm
+yayerror=$((yayerror + $?))
+
 # Disable coredump
 
 echo "\nStorage=none
 ProcessSizeMax=0" | sudo tee -a /etc/systemd/coredump.conf
-
-# Android Studio
-yay -S android-studio --noconfirm
-yayerror=$((yayerror + $?))
 
 # Creation des repertoires utilisateurs
 
