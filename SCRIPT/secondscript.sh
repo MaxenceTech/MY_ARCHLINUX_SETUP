@@ -466,6 +466,9 @@ GSK_RENDERER=ngl
 OCL_ICD_FILENAMES=intel.icd:nvidia.icd
 __EGL_VENDOR_LIBRARY_FILENAMES=/usr/share/glvnd/egl_vendor.d/50_mesa.json
 __GLX_VENDOR_LIBRARY_NAME=mesa
+STRANGLE_VSYNC=1
+STRANGLE_FPS=120
+STRANGLE_FPS_BATTERY=60
 GAMEMODERUNEXEC="env vblank_mode=0 LD_BIND_NOW=1 OCL_ICD_FILENAMES=nvidia.icd:intel.icd __NV_PRIME_RENDER_OFFLOAD=1 __EGL_VENDOR_LIBRARY_FILENAMES=/usr/share/glvnd/egl_vendor.d/10_nvidia.json __GLX_VENDOR_LIBRARY_NAME=nvidia __VK_LAYER_NV_optimus=NVIDIA_only"' | sudo tee -a /etc/environment
 
 # Gaming support
@@ -473,6 +476,8 @@ sudo pacman -S steam prismlauncher ttf-liberation lib32-fontconfig \
     gamemode lib32-gamemode --noconfirm
 pacmanerror=$((pacmanerror + $?))
 yay -S ttf-ms-win11-auto --noconfirm
+yayerror=$((yayerror + $?))
+yay -S libstrangle-git --noconfirm
 yayerror=$((yayerror + $?))
 
 
