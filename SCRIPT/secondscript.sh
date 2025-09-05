@@ -245,6 +245,34 @@ sudo setfacl -R -b /var/lib/libvirt/images/
 sudo setfacl -R -m "u:${USER}:rwX" /var/lib/libvirt/images/
 sudo setfacl -m "d:u:${USER}:rwx" /var/lib/libvirt/images/
 
+echo '#!/bin/bash
+
+while :; do
+    read -rp "Nom du disque (chiffres et lettres uniquement): " VMNAME
+    # Basic hostname validation (RFC 1123 compliant)
+    if [[ "$VMNAME" =~ ^[a-zA-Z0-9]([a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?$ ]] && [ ${#VMNAME} -ge 1 ] && [ ${#VMNAME} -le 63 ]; then
+        break
+    else
+        echo "Nom d hôte non valide. Utilisez 1 à 63 caractères (lettres, chiffres, tirets uniquement, sans tirets au début ou à la fin)."
+    fi
+done
+
+while :; do
+    read -rp "Taille à ajouter en GB en plus des 128 (chiffres uniquement): " size
+    if [[ $size =~ ^[0-9]{1,63}$ ]]; then
+        break
+    else
+        echo "Taille invalide. Utiliser chiffres uniquement (>=128, max 63 digits)."
+    fi
+done
+if [ ! -f /var/lib/libvirt/images/win11-disk-${VMNAME}.qcow2 ]; then
+	cp /var/lib/libvirt/images/win11-template-base.qcow2 /var/lib/libvirt/images/win11-disk-${VMNAME}.qcow2
+	sudo qemu-img resize /var/lib/libvirt/images/win11-disk-${VMNAME}.qcow2 +"${size}G"
+    echo "Vous devrez redimensionner le disque manuellement !"
+else
+	echo "Le fichier existe déjà ! Abandon !"' | sudo tee /usr/local/bin/creatediskwin11
+sudo chmod +x /usr/local/bin/creatediskwin11
+
 mkdir ~/Templates
 cat /archinstall/CONFIG/libvirt-config-windows11.xml > ~/Templates/libvirt-config-windows11.xml
 
