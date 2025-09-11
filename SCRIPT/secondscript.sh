@@ -287,7 +287,9 @@ pacmanerror=$((pacmanerror + $?))
 
 sudo pacman -S firewalld --noconfirm
 pacmanerror=$((pacmanerror + $?))
-sudo systemctl enable firewalld.service 
+sudo systemctl enable --now firewalld.service
+sleep 5
+sudo firewall-cmd --zone=public --remove-service ssh
 
 # SSD Optimisation
 
