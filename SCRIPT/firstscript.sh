@@ -151,7 +151,7 @@ SWAPUUIDGREP=$(awk '$3 == "swap" {print $1}' /etc/fstab)
 bootctl install
 
 # Create bootloader configuration
-echo "default  arch.conf
+echo "default  @saved
 timeout  6
 console-mode max
 editor   no" | tee /boot/loader/loader.conf
