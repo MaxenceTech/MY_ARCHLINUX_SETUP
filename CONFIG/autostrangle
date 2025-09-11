@@ -46,12 +46,15 @@ print_usage_info() {
 	echo "Strangle home page: <https://gitlab.com/torkel104/libstrangle>"
 }
 
-#Custom to cap to 72 fps when LG_PROJECTOR is plugged in
+#Cap to 72 fps when unplugged
+export STRANGLE_FPS_BATTERY="72"
+
+#Cap to 72 fps when LG_PROJECTOR or SAMSUNG-TV is plugged in
 reducfpsontvcount="$(gnome-randr | grep -c -e "LG PROJECTOR" -e "Samsung Electric Company 43")" 
 if [ "$reducfpsontvcount" -gt 0 ]; then 
-    STRANGLE_FPS="72" 
+    export STRANGLE_FPS="72" 
 else 
-    STRANGLE_FPS="0" 
+    export STRANGLE_FPS="0" 
 fi
 
 while [ $# -gt 0 ]; do
