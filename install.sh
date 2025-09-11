@@ -75,7 +75,7 @@ for disk in /dev/nvme*n1; do
   nvme sanitize "$disk" -a 0x02
 done
 
-sleep 60
+sleep 120
 
 #==============================================================================
 # DISK PARTITIONING AND FILESYSTEM SETUP
