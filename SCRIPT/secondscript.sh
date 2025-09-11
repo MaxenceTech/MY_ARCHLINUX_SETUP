@@ -287,7 +287,7 @@ sudo pacman -S firewalld --noconfirm
 pacmanerror=$((pacmanerror + $?))
 sudo systemctl enable --now firewalld.service
 sleep 5
-sudo firewall-cmd --zone=public --remove-service ssh
+sudo firewall-cmd --zone=public --remove-service ssh --permanent
 
 if [ -v SSID ];then
     read -p "Do you want to add $SSID as a home network ? (yes/no) " yn
