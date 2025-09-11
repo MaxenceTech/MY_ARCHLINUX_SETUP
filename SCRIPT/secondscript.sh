@@ -265,7 +265,7 @@ while :; do
 done
 if [ ! -f /var/lib/libvirt/images/win11-disk-${VMNAME}.qcow2 ]; then
 	cp //var/lib/libvirt/images/altas11-base-image.qcow2 /var/lib/libvirt/images/win11-disk-${VMNAME}.qcow2
-	qemu-img resize /var/lib/libvirt/images/win11-disk-${VMNAME}.qcow2 +"${size}G"
+	qemu-img resize /var/lib/libvirt/images/win11-disk-${VMNAME}.qcow2 "${size}G"
     echo "Vous devrez redimensionner le disque manuellement depuis Windows !"
 else
 	echo "Le fichier existe déjà ! Abandon !"
