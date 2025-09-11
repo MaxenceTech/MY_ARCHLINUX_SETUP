@@ -331,7 +331,7 @@ yayerror=$((yayerror + $?))
 
 # Disable coredump
 
-echo "\nStorage=none
+echo "Storage=none
 ProcessSizeMax=0" | sudo tee -a /etc/systemd/coredump.conf
 
 # Creation des repertoires utilisateurs
