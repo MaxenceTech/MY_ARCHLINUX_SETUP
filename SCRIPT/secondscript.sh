@@ -257,10 +257,10 @@ done
 
 while :; do
     read -rp "Quel taille souhaitez-vous pour votre disque (en GB, 27 minimum): " size
-    if [[ $size =~ ^[0-9]{1,63}$ ]]  && [ ${#size} -ge 27 ]; then
+    if [[ $size =~ ^[0-9]{1,63}$ ]]  && [ $size -ge 27 ]; then
         break
     else
-        echo "Taille invalide. Utiliser chiffres uniquement (>=128, max 63 digits) et supérieur à 27."
+        echo "Taille invalide. Utiliser des chiffres uniquement et la taille doit être supérieure à 27G"
     fi
 done
 if [ ! -f /var/lib/libvirt/images/win11-disk-${VMNAME}.qcow2 ]; then
