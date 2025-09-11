@@ -493,7 +493,7 @@ yay -S libstrangle-git --noconfirm
 yayerror=$((yayerror + $?))
 
 sudo cat /archinstall/CONFIG/autostrangle | sudo tee /usr/local/bin/autostrangle > /dev/null
-sudo chmod 755 /archinstall/CONFIG/autostrangle
+sudo chmod 755 /usr/local/bin/autostrangle
 
 sudo tee /usr/local/bin/setpci-latency.sh > /dev/null << 'EOF'
 #!/bin/sh
