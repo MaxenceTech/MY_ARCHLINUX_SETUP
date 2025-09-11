@@ -479,7 +479,7 @@ GAMEMODERUNEXEC="env vblank_mode=0 LD_BIND_NOW=1 OCL_ICD_FILENAMES=nvidia.icd:in
 
 # Gaming support
 sudo pacman -S steam prismlauncher ttf-liberation lib32-fontconfig \
-    gamemode lib32-gamemode --noconfirm
+    gamemode lib32-gamemode joyutils --noconfirm
 pacmanerror=$((pacmanerror + $?))
 yay -S ttf-ms-win11-auto --noconfirm
 yayerror=$((yayerror + $?))
