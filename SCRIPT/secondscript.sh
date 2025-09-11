@@ -162,7 +162,7 @@ echo "/usr/lib" | sudo tee /etc/ld.so.conf.d/00-usrlib.conf
 # Add custom prime-run command (with opencl support redirection)
 
 echo '#!/bin/bash
-OCL_ICD_FILENAMES=nvidia.icd:intel.icd __NV_PRIME_RENDER_OFFLOAD=1 __EGL_VENDOR_LIBRARY_FILENAMES=/usr/share/glvnd/egl_vendor.d/10_nvidia.json __GLX_VENDOR_LIBRARY_NAME=nvidia __VK_LAYER_NV_optimus=NVIDIA_only "$@"' | sudo tee /usr/local/bin/prime-run
+exec env OCL_ICD_FILENAMES=nvidia.icd:intel.icd __NV_PRIME_RENDER_OFFLOAD=1 __EGL_VENDOR_LIBRARY_FILENAMES=/usr/share/glvnd/egl_vendor.d/10_nvidia.json __GLX_VENDOR_LIBRARY_NAME=nvidia __VK_LAYER_NV_optimus=NVIDIA_only "$@"' | sudo tee /usr/local/bin/prime-run
 sudo chmod 755 /usr/local/bin/prime-run
 
 # Dbus
@@ -481,7 +481,7 @@ GSK_RENDERER=ngl
 OCL_ICD_FILENAMES=intel.icd:nvidia.icd
 __EGL_VENDOR_LIBRARY_FILENAMES=/usr/share/glvnd/egl_vendor.d/50_mesa.json
 __GLX_VENDOR_LIBRARY_NAME=mesa
-GAMEMODERUNEXEC="env vblank_mode=0 LD_BIND_NOW=1 OCL_ICD_FILENAMES=nvidia.icd:intel.icd __NV_PRIME_RENDER_OFFLOAD=1 __EGL_VENDOR_LIBRARY_FILENAMES=/usr/share/glvnd/egl_vendor.d/10_nvidia.json __GLX_VENDOR_LIBRARY_NAME=nvidia __VK_LAYER_NV_optimus=NVIDIA_only"' | sudo tee -a /etc/environment
+GAMEMODERUNEXEC="autostrangle prime-run env vblank_mode=0 LD_BIND_NOW=1"' | sudo tee -a /etc/environment
 
 # Gaming support
 sudo pacman -S steam prismlauncher ttf-liberation lib32-fontconfig \
