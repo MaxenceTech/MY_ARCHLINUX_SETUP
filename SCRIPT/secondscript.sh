@@ -30,9 +30,7 @@ do
     sudo nmcli device wifi list
     echo -e "\n\n\n\nSSID :"
     read -r SSID
-    echo "Password :"
-    read -r PASSWORD
-    sudo nmcli device wifi connect "$SSID" password "$PASSWORD"
+    sudo nmcli device wifi connect "$SSID" --ask
     t=$?
     sleep 10
     ping -c 5 google.com 
