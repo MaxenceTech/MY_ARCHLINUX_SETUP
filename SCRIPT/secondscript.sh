@@ -265,10 +265,11 @@ while :; do
 done
 if [ ! -f /var/lib/libvirt/images/win11-disk-${VMNAME}.qcow2 ]; then
 	cp /var/lib/libvirt/images/win11-template-base.qcow2 /var/lib/libvirt/images/win11-disk-${VMNAME}.qcow2
-	sudo qemu-img resize /var/lib/libvirt/images/win11-disk-${VMNAME}.qcow2 +"${size}G"
+	qemu-img resize /var/lib/libvirt/images/win11-disk-${VMNAME}.qcow2 +"${size}G"
     echo "Vous devrez redimensionner le disque manuellement !"
 else
-	echo "Le fichier existe déjà ! Abandon !"' | sudo tee /usr/local/bin/creatediskwin11
+	echo "Le fichier existe déjà ! Abandon !"
+ fi' | sudo tee /usr/local/bin/creatediskwin11
 sudo chmod +x /usr/local/bin/creatediskwin11
 
 mkdir ~/Templates
