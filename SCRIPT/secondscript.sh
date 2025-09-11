@@ -481,8 +481,6 @@ GSK_RENDERER=ngl
 OCL_ICD_FILENAMES=intel.icd:nvidia.icd
 __EGL_VENDOR_LIBRARY_FILENAMES=/usr/share/glvnd/egl_vendor.d/50_mesa.json
 __GLX_VENDOR_LIBRARY_NAME=mesa
-STRANGLE_FPS=72
-STRANGLE_FPS_BATTERY=72
 GAMEMODERUNEXEC="env vblank_mode=0 LD_BIND_NOW=1 OCL_ICD_FILENAMES=nvidia.icd:intel.icd __NV_PRIME_RENDER_OFFLOAD=1 __EGL_VENDOR_LIBRARY_FILENAMES=/usr/share/glvnd/egl_vendor.d/10_nvidia.json __GLX_VENDOR_LIBRARY_NAME=nvidia __VK_LAYER_NV_optimus=NVIDIA_only"' | sudo tee -a /etc/environment
 
 # Gaming support
@@ -494,6 +492,8 @@ yayerror=$((yayerror + $?))
 yay -S libstrangle-git --noconfirm
 yayerror=$((yayerror + $?))
 
+sudo cat /archinstall/CONFIG/autostrangle | sudo tee /usr/local/bin/autostrangle > /dev/null
+sudo chmod 755 /usr/local/bin/autostrangle
 
 sudo tee /usr/local/bin/setpci-latency.sh > /dev/null << 'EOF'
 #!/bin/sh
