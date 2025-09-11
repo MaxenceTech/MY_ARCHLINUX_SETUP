@@ -256,20 +256,20 @@ while :; do
 done
 
 while :; do
-    read -rp "Taille à ajouter en GB en plus des 128 (chiffres uniquement): " size
-    if [[ $size =~ ^[0-9]{1,63}$ ]]; then
+    read -rp "Quel taille souhaitez-vous pour votre disque (en GB, 27 minimum): " size
+    if [[ $size =~ ^[0-9]{1,63}$ ]]  && [ ${#size} -ge 27 ]; then
         break
     else
-        echo "Taille invalide. Utiliser chiffres uniquement (>=128, max 63 digits)."
+        echo "Taille invalide. Utiliser chiffres uniquement (>=128, max 63 digits) et supérieur à 27."
     fi
 done
 if [ ! -f /var/lib/libvirt/images/win11-disk-${VMNAME}.qcow2 ]; then
-	cp /var/lib/libvirt/images/win11-template-base.qcow2 /var/lib/libvirt/images/win11-disk-${VMNAME}.qcow2
+	cp //var/lib/libvirt/images/altas11-base-image.qcow2 /var/lib/libvirt/images/win11-disk-${VMNAME}.qcow2
 	qemu-img resize /var/lib/libvirt/images/win11-disk-${VMNAME}.qcow2 +"${size}G"
-    echo "Vous devrez redimensionner le disque manuellement avec gparted !"
+    echo "Vous devrez redimensionner le disque manuellement depuis Windows !"
 else
 	echo "Le fichier existe déjà ! Abandon !"
- fi' | sudo tee /usr/local/bin/creatediskwin11
+fi' | sudo tee /usr/local/bin/creatediskwin11
 sudo chmod +x /usr/local/bin/creatediskwin11
 
 mkdir ~/Templates
