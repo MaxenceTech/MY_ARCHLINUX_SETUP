@@ -266,7 +266,7 @@ done
 if [ ! -f /var/lib/libvirt/images/win11-disk-${VMNAME}.qcow2 ]; then
 	cp /var/lib/libvirt/images/win11-template-base.qcow2 /var/lib/libvirt/images/win11-disk-${VMNAME}.qcow2
 	qemu-img resize /var/lib/libvirt/images/win11-disk-${VMNAME}.qcow2 +"${size}G"
-    echo "Vous devrez redimensionner le disque manuellement !"
+    echo "Vous devrez redimensionner le disque manuellement avec gparted !"
 else
 	echo "Le fichier existe déjà ! Abandon !"
  fi' | sudo tee /usr/local/bin/creatediskwin11
