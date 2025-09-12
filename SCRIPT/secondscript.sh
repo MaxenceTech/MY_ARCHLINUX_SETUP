@@ -291,7 +291,7 @@ sleep 5
 sudo firewall-cmd --zone=public --remove-service ssh --permanent
 
 while :; do
-  read -p "Do you want to add $SSID as a home network ? (yes/no) " yn
+  read -p "Do you want to add $SSID as a home network ? (y/n) " yn
 	case $yn in 
 		y | Y) echo ok, we will proceed;
   		nmcli connection modify $SSID connection.zone home;
