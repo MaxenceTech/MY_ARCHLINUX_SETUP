@@ -290,16 +290,18 @@ sudo systemctl enable --now firewalld.service
 sleep 5
 sudo firewall-cmd --zone=public --remove-service ssh --permanent
 
-if [ -v SSID ];then
-    read -p "Do you want to add $SSID as a home network ? (yes/no) " yn
+while :; do
+  read -p "Do you want to add $SSID as a home network ? (yes/no) " yn
 	case $yn in 
 		y | Y) echo ok, we will proceed;
-  			nmcli connection modify $SSID connection.zone home;
-	 		read -r -p "$SSID is now a home network. Press any key to continue...";;
-		n | N) read -r -p "No changes made. Press any key to continue...";;
+  		nmcli connection modify $SSID connection.zone home;
+	 		read -r -p "$SSID is now a home network. Press any key to continue...";
+      break;;
+		n | N) read -r -p "No changes made. Press any key to continue...";
+      break;;
 		*) read -r -p "Invalid answer. No changes made. Press any key to continue...";;
 	esac
-fi
+done
 
 # SSD Optimisation
 
