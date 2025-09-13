@@ -243,11 +243,10 @@ sudo setfacl -R -b /var/lib/libvirt/images/
 sudo setfacl -R -m "u:${USER}:rwX" /var/lib/libvirt/images/
 sudo setfacl -m "d:u:${USER}:rwx" /var/lib/libvirt/images/
 
-sudo cat /archinstall/CONFIG/createatlasos11 | sudo tee /usr/local/bin/createatlasos11vm > /dev/null
+sudo cat /archinstall/CONFIG/reateatlasos11vm | sudo tee /usr/local/bin/createatlasos11vm > /dev/null
 sudo chmod +x /usr/local/bin/createatlasos11vm
 
 mkdir ~/Templates
-cat /archinstall/CONFIG/libvirt-config-windows11.xml > ~/Templates/libvirt-config-windows11.xml
 
 # Fix keyboard layout
 sudo localectl set-x11-keymap fr
