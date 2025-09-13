@@ -243,37 +243,10 @@ sudo setfacl -R -b /var/lib/libvirt/images/
 sudo setfacl -R -m "u:${USER}:rwX" /var/lib/libvirt/images/
 sudo setfacl -m "d:u:${USER}:rwx" /var/lib/libvirt/images/
 
-echo '#!/bin/bash
-
-while :; do
-    read -rp "Nom du disque (chiffres et lettres uniquement): " VMNAME
-    # Basic hostname validation (RFC 1123 compliant)
-    if [[ "$VMNAME" =~ ^[a-zA-Z0-9]([a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?$ ]] && [ ${#VMNAME} -ge 1 ] && [ ${#VMNAME} -le 63 ]; then
-        break
-    else
-        echo "Nom d hôte non valide. Utilisez 1 à 63 caractères (lettres, chiffres, tirets uniquement, sans tirets au début ou à la fin)."
-    fi
-done
-
-while :; do
-    read -rp "Quel taille souhaitez-vous pour votre disque (en GB, 27 minimum): " size
-    if [[ $size =~ ^[0-9]{1,63}$ ]]  && [ $size -ge 27 ]; then
-        break
-    else
-        echo "Taille invalide. Utiliser des chiffres uniquement et la taille doit être supérieure à 27G"
-    fi
-done
-if [ ! -f /var/lib/libvirt/images/win11-disk-${VMNAME}.qcow2 ]; then
-	cp //var/lib/libvirt/images/altas11-base-image.qcow2 /var/lib/libvirt/images/win11-disk-${VMNAME}.qcow2
-	qemu-img resize /var/lib/libvirt/images/win11-disk-${VMNAME}.qcow2 "${size}G"
-    echo "Vous devrez redimensionner le disque manuellement depuis Windows !"
-else
-	echo "Le fichier existe déjà ! Abandon !"
-fi' | sudo tee /usr/local/bin/creatediskwin11
-sudo chmod +x /usr/local/bin/creatediskwin11
+sudo cat /archinstall/CONFIG/createatlasos11vm | sudo tee /usr/local/bin/createatlasos11vm > /dev/null
+sudo chmod +x /usr/local/bin/createatlasos11vm
 
 mkdir ~/Templates
-cat /archinstall/CONFIG/libvirt-config-windows11.xml > ~/Templates/libvirt-config-windows11.xml
 
 # Fix keyboard layout
 sudo localectl set-x11-keymap fr
