@@ -362,3 +362,5 @@ sudo qemu-nbd --disconnect /dev/nbd0
 sleep 5
 sudo rmmod nbd
 echo "[OK] Redimensionnement terminé."
+
+echo "Succès ! Fin du script."
