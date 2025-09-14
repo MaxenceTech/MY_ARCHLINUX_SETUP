@@ -161,7 +161,7 @@ echo "title   Arch Linux NVIDIA
 linux   /vmlinuz-linux
 initrd  /intel-ucode.img
 initrd  /initramfs-linux.img
-options root=$PARTUUIDGREP resume=$SWAPUUIDGREP hibernate.compressor=lz4 rw quiet mitigations=auto,nosmt nowatchdog tsc=reliable clocksource=tsc intel_iommu=on iommu=pt vt.global_cursor_default=0 zswap.enabled=1 zswap.shrinker_enabled=1 zswap.compressor=lz4 zswap.max_pool_percent=12 zswap.zpool=zsmalloc modprobe.blacklist=kvmfr" | tee /boot/loader/entries/arch.conf
+options root=$PARTUUIDGREP resume=$SWAPUUIDGREP hibernate.compressor=lz4 rw quiet mitigations=auto,nosmt nowatchdog tsc=reliable clocksource=tsc intel_iommu=on iommu=pt vt.global_cursor_default=0 zswap.enabled=1 zswap.shrinker_enabled=1 zswap.compressor=lz4 zswap.max_pool_percent=12 zswap.zpool=zsmalloc modprobe.blacklist=kvmfr video=HDMI-A-1:d" | tee /boot/loader/entries/arch.conf
 
 echo "title   Arch Linux GPU PASSTROUGH
 linux   /vmlinuz-linux
@@ -173,7 +173,7 @@ echo "title   Fallback Arch Linux NVIDIA
 linux   /vmlinuz-linux
 initrd  /intel-ucode.img
 initrd  /initramfs-linux-fallback.img
-options root=$PARTUUIDGREP resume=$SWAPUUIDGREP hibernate.compressor=lz4 rw quiet mitigations=auto,nosmt nowatchdog tsc=reliable clocksource=tsc intel_iommu=on iommu=pt vt.global_cursor_default=0 zswap.enabled=1 zswap.shrinker_enabled=1 zswap.compressor=lz4 zswap.max_pool_percent=12 zswap.zpool=zsmalloc modprobe.blacklist=kvmfr" | tee /boot/loader/entries/fallback-arch.conf
+options root=$PARTUUIDGREP resume=$SWAPUUIDGREP hibernate.compressor=lz4 rw quiet mitigations=auto,nosmt nowatchdog tsc=reliable clocksource=tsc intel_iommu=on iommu=pt vt.global_cursor_default=0 zswap.enabled=1 zswap.shrinker_enabled=1 zswap.compressor=lz4 zswap.max_pool_percent=12 zswap.zpool=zsmalloc modprobe.blacklist=kvmfr video=HDMI-A-1:d" | tee /boot/loader/entries/fallback-arch.conf
 
 echo "title   Fallback Arch Linux GPU PASSTROUGH
 linux   /vmlinuz-linux
