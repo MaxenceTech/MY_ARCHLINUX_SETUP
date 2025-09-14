@@ -243,6 +243,8 @@ sudo setfacl -R -b /var/lib/libvirt/images/
 sudo setfacl -R -m "u:${USER}:rwX" /var/lib/libvirt/images/
 sudo setfacl -m "d:u:${USER}:rwx" /var/lib/libvirt/images/
 
+yay -S virt-v2v --noconfirm
+
 sudo cat /archinstall/CONFIG/createatlasos11vm | sudo tee /usr/local/bin/createatlasos11vm > /dev/null
 sudo chmod +x /usr/local/bin/createatlasos11vm
 
