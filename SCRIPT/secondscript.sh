@@ -267,11 +267,11 @@ while :; do
   read -p "Do you want to add $SSID as a home network ? (y/n) " yn
 	case $yn in 
 		y | Y) echo ok, we will proceed;
-  		nmcli connection modify $SSID connection.zone home;
+  			nmcli connection modify $SSID connection.zone home;
 	 		read -r -p "$SSID is now a home network. Press any key to continue...";
-      break;;
+      		break;;
 		n | N) read -r -p "No changes made. Press any key to continue...";
-      break;;
+      		break;;
 		*) read -r -p "Invalid answer. No changes made. Press any key to continue...";;
 	esac
 done
