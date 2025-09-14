@@ -148,6 +148,8 @@ ACTION=="unbind", SUBSYSTEM=="pci", ATTR{vendor}=="0x10de", ATTR{class}=="0x0302
 
 echo 'options nvidia "NVreg_DynamicPowerManagement=0x03" NVreg_UsePageAttributeTable=1' | sudo tee /etc/modprobe.d/80-nvidia.conf
 
+sudo mkinitcpio-editor -a nvidia nvidia_modeset nvidia_uvm nvidia_drm
+
 sudo systemctl enable nvidia-powerd.service
 
 # Add OpenCL Support
