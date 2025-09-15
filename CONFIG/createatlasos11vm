@@ -340,6 +340,24 @@ EOF
   done
 fi
 
+while :; do
+  read -r -p "Ajouter le partage du presse-papier (y/n) ? " yn
+	case $yn in 
+		y | Y) echo "[INFO] Ajout du presse-papier partagé ...";
+  			virsh attach-device "$COMPLETEVMNAME" /dev/stdin --config << EOF
+<channel type="spicevmc">
+  <target type="virtio" name="com.redhat.spice.0"/>
+  <address type="virtio-serial" controller="0" bus="0" port="1"/>
+</channel>
+EOF
+	 		read -r -p "Presse-papier partagé ajouté. Appuyez sur Entrée pour continuer... ";
+      		break;;
+		n | N) read -r -p "Presse-papier partagé NON ajouté. Appuyez sur Entrée pour continuer... ";
+      		break;;
+		*) read -r -p "Entrée invalide. Appuyez sur Entrée pour continuer... ";;
+	esac
+done
+
 # =========================
 # Redimensionnement du disque
 # =========================
