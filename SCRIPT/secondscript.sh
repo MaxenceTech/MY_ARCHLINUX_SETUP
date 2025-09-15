@@ -152,7 +152,8 @@ sudo mkinitcpio-editor -a nvidia nvidia_modeset nvidia_uvm nvidia_drm
 
 sudo mkdir /etc/pacman.d/hooks
 
-echo "[Trigger]
+sudo tee /etc/pacman.d/hooks/nvidia.hook << 'EOF'
+[Trigger]
 Operation=Install
 Operation=Upgrade
 Operation=Remove
@@ -160,6 +161,7 @@ Type=Package
 # You can remove package(s) that don't apply to your config, e.g. if you only use nvidia-open you can remove nvidia-lts as a Target
 Target=nvidia
 Target=nvidia-open
+Target=nvidia-lts
 # If running a different kernel, modify below to match
 Target=linux
 
@@ -168,7 +170,8 @@ Description=Updating NVIDIA module in initcpio
 Depends=mkinitcpio
 When=PostTransaction
 NeedsTargets
-Exec=/bin/sh -c 'while read -r trg; do case $trg in linux*) exit 0; esac; done; /usr/bin/mkinitcpio -P'" | sudo tee /etc/pacman.d/hooks/nvidia.hook
+Exec=/bin/sh -c 'while read -r trg; do case $trg in linux*) exit 0; esac; done; /usr/bin/mkinitcpio -P'
+EOF
 
 sudo systemctl enable nvidia-powerd.service
 
