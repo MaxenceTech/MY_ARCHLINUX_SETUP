@@ -684,7 +684,7 @@ escapeKey=KEY_RIGHTSHIFT
 rawMouse=yes
 
 [spice]
-clipboard=no' | sudo tee /etc/looking-glass-client.ini
+clipboard=yes' | sudo tee /etc/looking-glass-client.ini
 
 # Script Transparent Huge Page
 
