@@ -9,6 +9,8 @@ set -euo pipefail
 PATHBASEIMAGE="/var/lib/libvirt/images/atlas11-base-image.qcow2"
 # Dossier de destination du disque (terminer par /)
 DISKDESTINATIONFOLDER="/var/lib/libvirt/images/"
+# Chemin vers l'ISO
+ISOPATH="/var/lib/libvirt/images/driversandsoftware.iso"
 # Chemin vers un autre disque à attacher (optionnel)
 OTHERDISKPATH=""
 
@@ -304,7 +306,7 @@ while :; do
   		virsh attach-device "$COMPLETEVMNAME" /dev/stdin --config << EOF
 <disk type="file" device="cdrom">
   <driver name="qemu" type="raw"/>
-  <source file="/var/lib/libvirt/images/driversandsoftware.iso"/>
+  <source file="$ISOPATH"/>
   <target dev="sda" bus="sata"/>
   <readonly/>
 </disk>
