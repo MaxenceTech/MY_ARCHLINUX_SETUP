@@ -22,7 +22,7 @@ echo power | tee /sys/devices/system/cpu/cpu*/cpufreq/energy_performance_prefere
 echo 15 | tee /sys/devices/system/cpu/cpu*/power/energy_perf_bias
 
 # Switch display to lower refresh rate for power saving
-runuser -l "$(last | cut -f 1 -d " " | sed '1p;d')" -c 'gnome-randr modify eDP-1 --mode 2560x1600@60.008'
+runuser -l "$(last | cut -f 1 -d " " | sed '1p;d')" -c 'gnome-randr modify $(gnome-randr | grep "eDP" | cut -f 1 -d " "  | sed -n '2p') --mode 2560x1600@60.008'
 
 # Save current brightness and reduce it for battery conservation
 tee /tmp/brightness-saved < /sys/class/backlight/intel_backlight/brightness
