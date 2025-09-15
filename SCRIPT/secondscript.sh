@@ -150,6 +150,8 @@ echo 'options nvidia "NVreg_DynamicPowerManagement=0x03" NVreg_UsePageAttributeT
 
 sudo mkinitcpio-editor -a nvidia nvidia_modeset nvidia_uvm nvidia_drm
 
+sudo mkdir /etc/pacman.d/hooks
+
 echo "[Trigger]
 Operation=Install
 Operation=Upgrade
