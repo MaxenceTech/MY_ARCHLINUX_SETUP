@@ -285,16 +285,16 @@ while :; do
   read -r -p "Ajouter le réseau par défaut (y/n) ? " yn
 	case $yn in 
 		y | Y) echo "[INFO] Ajout de l'interface réseau...";
-  		virsh attach-device "$COMPLETEVMNAME" /dev/stdin --config << EOF
+  			virsh attach-device "$COMPLETEVMNAME" /dev/stdin --config << EOF
 <interface type="network">
   <source network="default"/>
   <model type="virtio"/>
 </interface>
 EOF
 	 		read -r -p "Réseau ajouté. Appuyez sur Entrée pour continuer... ";
-      break;;
+      		break;;
 		n | N) read -r -p "Aucun réseau ajouté. Appuyez sur Entrée pour continuer... ";
-      break;;
+      		break;;
 		*) read -r -p "Entrée invalide. Appuyez sur Entrée pour continuer... ";;
 	esac
 done
@@ -303,7 +303,7 @@ while :; do
   read -r -p "Ajouter le CD-ROM drivers and software (y/n) ? " yn
 	case $yn in 
 		y | Y) echo "[INFO] Ajout du CD-ROM...";
-  		virsh attach-device "$COMPLETEVMNAME" /dev/stdin --config << EOF
+  			virsh attach-device "$COMPLETEVMNAME" /dev/stdin --config << EOF
 <disk type="file" device="cdrom">
   <driver name="qemu" type="raw"/>
   <source file="$ISOPATH"/>
@@ -312,9 +312,9 @@ while :; do
 </disk>
 EOF
 	 		read -r -p "CD-ROM 'drivers and software' ajouté. Appuyez sur Entrée pour continuer... ";
-      break;;
+      		break;;
 		n | N) read -r -p "Aucun CD-ROM ajouté. Appuyez sur Entrée pour continuer... ";
-      break;;
+      		break;;
 		*) read -r -p "Entrée invalide. Appuyez sur Entrée pour continuer... ";;
 	esac
 done
