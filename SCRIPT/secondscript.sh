@@ -228,7 +228,7 @@ sudo pacman -S dmidecode gnome gnome-tweaks gnome-shell-extensions \
     xdg-desktop-portal xdg-desktop-portal-gnome power-profiles-daemon \
     gnome-themes-standard --noconfirm
 pacmanerror=$((pacmanerror + $?))
-yay -S ttf-firacode ttf-dejavu reversal-icon-theme-git --noconfirm
+yay -S reversal-icon-theme-git --noconfirm
 yayerror=$((yayerror + $?))
 
 sudo systemctl enable gdm.service
@@ -307,8 +307,8 @@ sudo systemctl enable fstrim.timer
 
 
 # Essential applications
-sudo pacman -S gparted speech-dispatcher libreoffice-still-fr file-roller zip unzip p7zip \
-    unrar python-pip tk gimp inkscape bolt hunspell-fr noto-fonts-emoji blender cdrtools --noconfirm
+sudo pacman -S gparted speech-dispatcher libreoffice-still-fr file-roller zip unzip p7zip ttf-dejavu \
+    unrar python-pip tk gimp inkscape bolt hunspell-fr noto-fonts-emoji blender cdrtools ttf-fira-code --noconfirm
 pacmanerror=$((pacmanerror + $?))
 yay -S vscodium-bin --noconfirm
 yayerror=$((yayerror + $?))
