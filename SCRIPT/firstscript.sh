@@ -137,6 +137,9 @@ vm.dirty_bytes = 4294967296
 vm.dirty_background_bytes = 2147483648
 vm.vfs_cache_pressure=50" | tee /etc/sysctl.d/99-ramtweaks.conf
 
+# Blacklist Watchdogs module
+echo "blacklist iTCO_wdt" | tee /etc/modprobe.d/blacklist_intelwatchdog.conf
+
 #==============================================================================
 # BOOTLOADER CONFIGURATION
 #==============================================================================
