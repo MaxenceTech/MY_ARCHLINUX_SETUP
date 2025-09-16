@@ -16,6 +16,17 @@ set -euo pipefail
 # Set French keyboard layout
 loadkeys fr-pc
 
+while :; do
+  read -p "The script will erase all yours NVME drives. Do you want to continue ? (y/n) " yn
+	case $yn in 
+		y | Y) echo ok, we will proceed;
+      		break;;
+		n | N) read -r -p "Exit. Press any key to continue...";
+      		exit 1;;
+		*) read -r -p "Invalid answer. Press any key to continue...";;
+	esac
+done
+
 #==============================================================================
 # NETWORK CONNECTIVITY SETUP
 #==============================================================================
