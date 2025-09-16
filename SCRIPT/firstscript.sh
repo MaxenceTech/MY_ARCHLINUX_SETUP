@@ -165,25 +165,25 @@ echo "title   Arch Linux NVIDIA
 linux   /vmlinuz-linux
 initrd  /intel-ucode.img
 initrd  /initramfs-linux.img
-options root=$PARTUUIDGREP resume=$SWAPUUIDGREP hibernate.compressor=lz4 rw quiet mitigations=auto,nosmt nowatchdog tsc=reliable clocksource=tsc intel_iommu=on iommu=pt vt.global_cursor_default=0 zswap.enabled=1 zswap.shrinker_enabled=1 zswap.compressor=lz4 zswap.max_pool_percent=12 zswap.zpool=zsmalloc modprobe.blacklist=kvmfr video=HDMI-A-1:d video=DP-1:d video=DP-2:d" | tee /boot/loader/entries/arch.conf
+options root=$PARTUUIDGREP resume=$SWAPUUIDGREP hibernate.compressor=lz4 rw quiet mitigations=auto,nosmt tsc=reliable clocksource=tsc intel_iommu=on iommu=pt vt.global_cursor_default=0 zswap.enabled=1 zswap.shrinker_enabled=1 zswap.compressor=lz4 zswap.max_pool_percent=12 zswap.zpool=zsmalloc modprobe.blacklist=kvmfr video=HDMI-A-1:d video=DP-1:d video=DP-2:d" | tee /boot/loader/entries/arch.conf
 
 echo "title   Arch Linux GPU PASSTROUGH
 linux   /vmlinuz-linux
 initrd  /intel-ucode.img
 initrd  /initramfs-linux.img
-options root=$PARTUUIDGREP resume=$SWAPUUIDGREP hibernate.compressor=lz4 rw quiet mitigations=auto,nosmt nowatchdog tsc=reliable clocksource=tsc intel_iommu=on iommu=pt vfio-pci.ids=10de:27a0,10de:22bc vt.global_cursor_default=0 zswap.enabled=1 zswap.shrinker_enabled=1 zswap.compressor=lz4 zswap.max_pool_percent=12 zswap.zpool=zsmalloc" | tee /boot/loader/entries/arch-gpupasstrough.conf
+options root=$PARTUUIDGREP resume=$SWAPUUIDGREP hibernate.compressor=lz4 rw quiet mitigations=auto,nosmt tsc=reliable clocksource=tsc intel_iommu=on iommu=pt vfio-pci.ids=10de:27a0,10de:22bc vt.global_cursor_default=0 zswap.enabled=1 zswap.shrinker_enabled=1 zswap.compressor=lz4 zswap.max_pool_percent=12 zswap.zpool=zsmalloc" | tee /boot/loader/entries/arch-gpupasstrough.conf
 
 echo "title   Fallback Arch Linux NVIDIA
 linux   /vmlinuz-linux
 initrd  /intel-ucode.img
 initrd  /initramfs-linux-fallback.img
-options root=$PARTUUIDGREP resume=$SWAPUUIDGREP hibernate.compressor=lz4 rw quiet mitigations=auto,nosmt nowatchdog tsc=reliable clocksource=tsc intel_iommu=on iommu=pt vt.global_cursor_default=0 zswap.enabled=1 zswap.shrinker_enabled=1 zswap.compressor=lz4 zswap.max_pool_percent=12 zswap.zpool=zsmalloc modprobe.blacklist=kvmfr video=HDMI-A-1:d video=DP-1:d video=DP-2:d" | tee /boot/loader/entries/fallback-arch.conf
+options root=$PARTUUIDGREP resume=$SWAPUUIDGREP hibernate.compressor=lz4 rw quiet mitigations=auto,nosmt tsc=reliable clocksource=tsc intel_iommu=on iommu=pt vt.global_cursor_default=0 zswap.enabled=1 zswap.shrinker_enabled=1 zswap.compressor=lz4 zswap.max_pool_percent=12 zswap.zpool=zsmalloc modprobe.blacklist=kvmfr video=HDMI-A-1:d video=DP-1:d video=DP-2:d" | tee /boot/loader/entries/fallback-arch.conf
 
 echo "title   Fallback Arch Linux GPU PASSTROUGH
 linux   /vmlinuz-linux
 initrd  /intel-ucode.img
 initrd  /initramfs-linux-fallback.img
-options root=$PARTUUIDGREP resume=$SWAPUUIDGREP hibernate.compressor=lz4 rw quiet mitigations=auto,nosmt nowatchdog tsc=reliable clocksource=tsc intel_iommu=on iommu=pt vfio-pci.ids=10de:27a0,10de:22bc vt.global_cursor_default=0 zswap.enabled=1 zswap.shrinker_enabled=1 zswap.compressor=lz4 zswap.max_pool_percent=12 zswap.zpool=zsmalloc" | tee /boot/loader/entries/fallback-arch-gpupasstrough.conf
+options root=$PARTUUIDGREP resume=$SWAPUUIDGREP hibernate.compressor=lz4 rw quiet mitigations=auto,nosmt tsc=reliable clocksource=tsc intel_iommu=on iommu=pt vfio-pci.ids=10de:27a0,10de:22bc vt.global_cursor_default=0 zswap.enabled=1 zswap.shrinker_enabled=1 zswap.compressor=lz4 zswap.max_pool_percent=12 zswap.zpool=zsmalloc" | tee /boot/loader/entries/fallback-arch-gpupasstrough.conf
 
 # Update bootloader and enable automatic updates
 bootctl update || [[ $? -eq 1 ]]
