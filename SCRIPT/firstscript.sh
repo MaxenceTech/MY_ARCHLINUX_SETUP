@@ -65,6 +65,8 @@ echo "KEYMAP=fr-pc" > /etc/vconsole.conf
 # USER ACCOUNT CONFIGURATION
 #==============================================================================
 
+set +euo pipefail
+
 # Configure root password with retry loop
 echo "Mot de passe root :"
 x=10
@@ -98,6 +100,8 @@ do
     passwd "$nomutilisateur"
     x=$?
 done
+
+set -euo pipefail
 
 # Enable sudo access for wheel group
 sed -i 's/^#\s*\(%wheel\s*ALL=(ALL:ALL)\s*ALL\)/\1/' /etc/sudoers
