@@ -112,13 +112,26 @@ elif [ "$nvme_count" -eq 1 ]; then
     sgdisk --set-alignment=2048 --align-end -n 2:0:+72G -t 2:8200 "$disk1"    # Swap partition
     sgdisk --set-alignment=2048 --align-end -n 3:0:0 -t 3:8304 "$disk1"      # Root partition
 
+	cryptsetup luksFormat \
+  		--type=luks2 \
+  		--cipher=aes-xts-plain64 \
+  		--key-size=512 \
+  		--pbkdf=argon2id \
+  		--iter-time=4000 \
+  		--verify-passphrase \
+  		--label=cryptroot \
+  		--pbkdf-memory=2097152 \
+  		--pbkdf-parallel=8 \
+  		"${disk1}p3"
+	cryptsetup open "${disk1}p3 root
+ 
     # Create filesystems
     mkfs.fat -F32 "${disk1}p1"
     mkswap --label diskswap "${disk1}p2"
-    mkfs.ext4 "${disk1}p3"
+    mkfs.ext4 /dev/mapper/root
 
     # Mount filesystems
-    mount "${disk1}p3" /mnt
+    mount /dev/mapper/root /mnt
     mount --mkdir "${disk1}p1" /mnt/boot
     swapon "${disk1}p2"
 
