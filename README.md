@@ -23,6 +23,13 @@ Ce dépôt contient des scripts automatisés pour gérer l'installation d'Arch L
   - Images de secours (fallback)
 
 ## Usage :
+
+### 1. Vérification de compatibilité (recommandé)
+```bash
+./SCRIPT/check-compatibility.sh
+```
+
+### 2. Installation principale
 ```
 ./install.sh
 ```
@@ -63,6 +70,28 @@ Le script configure automatiquement :
   - Disque 2 : Swap (chiffré) + Data (chiffré)
 
 Au démarrage, vous devrez saisir les mots de passe de déchiffrement pour chaque partition LUKS.
+
+## Dépannage
+
+### Problèmes de démarrage après Secure Boot
+1. **Le système ne démarre pas après enrollment des clés**
+   - Redémarrez et désactivez Secure Boot dans le firmware UEFI
+   - Vérifiez que les fichiers UKI existent dans `/boot/EFI/Linux/`
+   - Regenerez les UKI : `sudo /etc/kernel/install.d/90-ukify.install add`
+
+2. **Erreurs de déchiffrement LUKS**
+   - Vérifiez que le bon UUID est utilisé dans la ligne de commande du kernel
+   - Controlez `/etc/crypttab` si nécessaire
+   - Testez le déchiffrement manuel : `cryptsetup open /dev/nvmeXnXpX cryptroot`
+
+3. **Performances de chiffrement lentes**
+   - Vérifiez la disponibilité AES-NI : `grep aes /proc/cpuinfo`
+   - Kontrollez les paramètres LUKS : `cryptsetup luksDump /dev/nvmeXnXpX`
+   - Considérez l'ajustement des paramètres argon2id
+
+### Scripts utilitaires
+- `./SCRIPT/check-compatibility.sh` - Vérification de compatibilité système
+- `./SCRIPT/copy-secureboot-keys.sh` - Copie des clés Secure Boot vers USB
 
 ## NB :
 ### Informations sur gamemode

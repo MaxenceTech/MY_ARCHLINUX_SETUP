@@ -130,6 +130,10 @@ sed -i "$((ligne)) d" /etc/mkinitcpio.conf
 # Add encrypt hook for LUKS support
 sed -i "$((ligne-1)) a HOOKS=(systemd autodetect modconf block keyboard sd-vconsole sd-encrypt filesystems fsck acpi_override)" /etc/mkinitcpio.conf
 
+# Rebuild initramfs with new hooks
+echo "Rebuilding initramfs with encryption support..."
+mkinitcpio -P
+
 #==============================================================================
 # SYSTEM PERFORMANCE TWEAKS
 #==============================================================================
@@ -151,7 +155,7 @@ echo "blacklist iTCO_wdt" | tee /etc/modprobe.d/blacklist_intelwatchdog.conf
 # Configure custom kernel modules and microcode
 echo "Configuring bootloader..."
 mkinitcpio-editor -a xe lz4
-pacman -S efibootmgr intel-ucode systemd-ukify --noconfirm
+pacman -S efibootmgr intel-ucode systemd-ukify openssl --noconfirm
 pacmanerror=$((pacmanerror + $?))
 
 # Get partition UUIDs for bootloader configuration
@@ -252,36 +256,69 @@ editor   no" | tee /boot/loader/loader.conf
 echo "Generating Unified Kernel Images with systemd-ukify..."
 
 # Generate primary UKI with NVIDIA support
-ukify build \
+echo "Generating NVIDIA UKI..."
+if ! ukify build \
     --linux=/boot/vmlinuz-linux \
     --initrd=/boot/intel-ucode.img \
     --initrd=/boot/initramfs-linux.img \
     --cmdline="$CMDLINE_COMMON modprobe.blacklist=kvmfr video=HDMI-A-1:d video=DP-1:d video=DP-2:d" \
     --secureboot-private-key=/etc/secureboot/keys/db.key \
     --secureboot-certificate=/etc/secureboot/keys/db.crt \
-    --output=/boot/EFI/Linux/arch-nvidia.efi
+    --output=/boot/EFI/Linux/arch-nvidia.efi; then
+    echo "Error: Failed to generate NVIDIA UKI"
+    pacmanerror=$((pacmanerror + 1))
+fi
 
 # Generate UKI for GPU passthrough
-ukify build \
+echo "Generating GPU passthrough UKI..."
+if ! ukify build \
     --linux=/boot/vmlinuz-linux \
     --initrd=/boot/intel-ucode.img \
     --initrd=/boot/initramfs-linux.img \
     --cmdline="$CMDLINE_COMMON vfio-pci.ids=10de:27a0,10de:22bc" \
     --secureboot-private-key=/etc/secureboot/keys/db.key \
     --secureboot-certificate=/etc/secureboot/keys/db.crt \
-    --output=/boot/EFI/Linux/arch-gpupassthrough.efi
+    --output=/boot/EFI/Linux/arch-gpupassthrough.efi; then
+    echo "Error: Failed to generate GPU passthrough UKI"
+    pacmanerror=$((pacmanerror + 1))
+fi
 
 # Generate fallback UKI
-ukify build \
+echo "Generating fallback UKI..."
+if ! ukify build \
     --linux=/boot/vmlinuz-linux \
     --initrd=/boot/intel-ucode.img \
     --initrd=/boot/initramfs-linux-fallback.img \
     --cmdline="$CMDLINE_COMMON modprobe.blacklist=kvmfr video=HDMI-A-1:d video=DP-1:d video=DP-2:d" \
     --secureboot-private-key=/etc/secureboot/keys/db.key \
     --secureboot-certificate=/etc/secureboot/keys/db.crt \
-    --output=/boot/EFI/Linux/arch-fallback.efi
+    --output=/boot/EFI/Linux/arch-fallback.efi; then
+    echo "Error: Failed to generate fallback UKI"
+    pacmanerror=$((pacmanerror + 1))
+fi
 
 echo "Unified Kernel Images generated successfully."
+
+# Verify UKI files were created
+echo "Verifying UKI files..."
+uki_files=("/boot/EFI/Linux/arch-nvidia.efi" "/boot/EFI/Linux/arch-gpupassthrough.efi" "/boot/EFI/Linux/arch-fallback.efi")
+missing_uki=()
+
+for uki in "${uki_files[@]}"; do
+    if [ ! -f "$uki" ]; then
+        missing_uki+=("$(basename "$uki")")
+    else
+        echo "  ✓ $(basename "$uki") ($(stat -c%s "$uki" | numfmt --to=iec))"
+    fi
+done
+
+if [ ${#missing_uki[@]} -gt 0 ]; then
+    echo "Warning: Missing UKI files:"
+    for uki in "${missing_uki[@]}"; do
+        echo "  - $uki"
+    done
+    pacmanerror=$((pacmanerror + 1))
+fi
 
 # Set up automatic UKI generation on kernel updates
 mkdir -p /etc/kernel/install.d
