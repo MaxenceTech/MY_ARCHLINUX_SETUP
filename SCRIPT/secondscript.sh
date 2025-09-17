@@ -10,9 +10,6 @@
 # Prerequisites: Completed base system installation, network connectivity
 #==============================================================================
 
-# Exit on any error, undefined variables, and pipe failures
-set -euo pipefail
-
 #==============================================================================
 # NETWORK CONNECTIVITY VERIFICATION
 #==============================================================================
@@ -41,6 +38,9 @@ do
         echo -e "\n\n\nConnected but no network !\n\n\n"
     fi
 done
+
+# Exit on any error, undefined variables, and pipe failures
+set -euo pipefail
 
 #==============================================================================
 # SYSTEM TIME AND HOSTNAME CONFIGURATION
