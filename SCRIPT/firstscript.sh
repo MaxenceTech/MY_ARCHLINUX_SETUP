@@ -124,7 +124,7 @@ echo "Updating mkinitcpio configuration..."
 hooksvar=$(grep -v  -n "^#" /etc/mkinitcpio.conf | grep 'HOOKS=')
 ligne="${hooksvar%:*}"
 sed -i "$((ligne)) d" /etc/mkinitcpio.conf
-sed -i "$((ligne-1)) a HOOKS=(systemd autodetect modconf block keyboard sd-vconsole filesystems fsck acpi_override)" /etc/mkinitcpio.conf
+sed -i "$((ligne-1)) a HOOKS=(systemd autodetect modconf keyboard sd-vconsole block sd-encrypt filesystems fsck acpi_override)" /etc/mkinitcpio.conf
 
 #==============================================================================
 # SYSTEM PERFORMANCE TWEAKS
