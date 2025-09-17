@@ -89,6 +89,71 @@ done
 sleep 120
 
 #==============================================================================
+# HARDWARE CAPABILITY CHECK
+#==============================================================================
+
+# Check for AES-NI hardware acceleration support
+echo "Checking for AES-NI hardware acceleration..."
+if grep -q aes /proc/cpuinfo; then
+    echo "AES-NI hardware acceleration is supported."
+    AES_NI_AVAILABLE=true
+else
+    echo "Warning: AES-NI hardware acceleration not detected."
+    AES_NI_AVAILABLE=false
+fi
+
+#==============================================================================
+# LUKS ENCRYPTION FUNCTIONS
+#==============================================================================
+
+# Setup LUKS encryption with AES-NI optimization
+setup_luks_partition() {
+    local device="$1"
+    local name="$2"
+    
+    echo "Setting up LUKS encryption for $device..."
+    
+    # Use AES-NI optimized cipher if available
+    if [ "$AES_NI_AVAILABLE" = true ]; then
+        CIPHER="aes-xts-plain64"
+        echo "Using AES-NI optimized cipher: $CIPHER"
+    else
+        CIPHER="aes-xts-plain64"
+        echo "Using standard cipher: $CIPHER"
+    fi
+    
+    # Setup LUKS with optimal parameters for performance and security
+    echo "Creating LUKS partition. You will be prompted for a passphrase."
+    echo "Choose a strong passphrase - this protects your entire system!"
+    
+    cryptsetup luksFormat \
+        --type luks2 \
+        --cipher "$CIPHER" \
+        --key-size 512 \
+        --hash sha512 \
+        --pbkdf argon2id \
+        --pbkdf-time 2000 \
+        --use-random \
+        "$device"
+    
+    if [ $? -ne 0 ]; then
+        echo "Error: LUKS formatting failed for $device"
+        exit 1
+    fi
+    
+    # Open the encrypted partition
+    echo "Opening encrypted partition..."
+    cryptsetup open "$device" "$name"
+    
+    if [ $? -ne 0 ]; then
+        echo "Error: Failed to open encrypted partition $device"
+        exit 1
+    fi
+    
+    echo "LUKS encryption setup completed for $device -> /dev/mapper/$name"
+}
+
+#==============================================================================
 # DISK PARTITIONING AND FILESYSTEM SETUP
 #==============================================================================
 
@@ -102,28 +167,36 @@ if [ "$nvme_count" -eq 0 ]; then
     echo "No NVMe disks found on this system. Exit"
     exit 1
 elif [ "$nvme_count" -eq 1 ]; then
-    # Single NVMe disk configuration
+    # Single NVMe disk configuration with LUKS encryption
     disk1="${nvme_disks[0]}"
     echo "Single NVMe disk detected: $disk1"
     
-    # Partition single disk: EFI + Swap + Root
+    # Partition single disk: EFI + Swap + Root (encrypted)
     sgdisk -Z "$disk1"
     sgdisk --set-alignment=2048 --align-end -n 1:0:+2G -t 1:ef00 "$disk1"    # EFI partition
     sgdisk --set-alignment=2048 --align-end -n 2:0:+72G -t 2:8200 "$disk1"    # Swap partition
-    sgdisk --set-alignment=2048 --align-end -n 3:0:0 -t 3:8300 "$disk1"      # Root partition
+    sgdisk --set-alignment=2048 --align-end -n 3:0:0 -t 3:8300 "$disk1"      # Root partition (to be encrypted)
 
-    # Create filesystems
+    # Create EFI filesystem
     mkfs.fat -F32 "${disk1}p1"
-    mkswap --label diskswap "${disk1}p2"
-    mkfs.ext4 "${disk1}p3"
+    
+    # Setup LUKS encryption for root partition
+    setup_luks_partition "${disk1}p3" "cryptroot"
+    
+    # Create filesystem on encrypted root
+    mkfs.ext4 /dev/mapper/cryptroot
+    
+    # Setup swap partition (also encrypted for security)
+    setup_luks_partition "${disk1}p2" "cryptswap"
+    mkswap /dev/mapper/cryptswap
 
     # Mount filesystems
-    mount "${disk1}p3" /mnt
+    mount /dev/mapper/cryptroot /mnt
     mount --mkdir "${disk1}p1" /mnt/boot
-    swapon "${disk1}p2"
+    swapon /dev/mapper/cryptswap
 
 elif [ "$nvme_count" -eq 2 ]; then
-    # Dual NVMe disk configuration
+    # Dual NVMe disk configuration with LUKS encryption
     echo "Two NVMe disks detected:"
     for i in "${!nvme_disks[@]}"; do
         echo "$((i+1)). ${nvme_disks[i]}"
@@ -156,23 +229,33 @@ elif [ "$nvme_count" -eq 2 ]; then
     sgdisk -Z "$disk1"
     sgdisk -Z "$disk2"
 
-    # Partition primary disk: EFI + Root
+    # Partition primary disk: EFI + Root (encrypted)
     sgdisk --set-alignment=2048 --align-end -n 1:0:+2G -t 1:ef00 "$disk1"       # EFI partition
-    sgdisk --set-alignment=2048 --align-end -n 2:0:0 -t 2:8300 "$disk1"        # Root partition
+    sgdisk --set-alignment=2048 --align-end -n 2:0:0 -t 2:8300 "$disk1"        # Root partition (to be encrypted)
+    
+    # Create EFI filesystem
     mkfs.fat -F32 "${disk1}p1"
-    mkfs.ext4 "${disk1}p2"
+    
+    # Setup LUKS encryption for root partition
+    setup_luks_partition "${disk1}p2" "cryptroot"
+    mkfs.ext4 /dev/mapper/cryptroot
 
-    # Partition secondary disk: Swap + Data
+    # Partition secondary disk: Swap (encrypted) + Data (encrypted)
     sgdisk --set-alignment=2048 --align-end -n 1:0:+72G -t 1:8200 "$disk2"      # Swap partition
     sgdisk --set-alignment=2048 --align-end -n 2:0:0 -t 2:8300 "$disk2"        # Data partition
-    mkswap --label diskswap "${disk2}p1"
-    mkfs.ext4 "${disk2}p2"
+    
+    # Setup LUKS encryption for swap and data partitions
+    setup_luks_partition "${disk2}p1" "cryptswap"
+    mkswap /dev/mapper/cryptswap
+    
+    setup_luks_partition "${disk2}p2" "cryptdata"
+    mkfs.ext4 /dev/mapper/cryptdata
 
     # Mount all filesystems
-    mount "${disk1}p2" /mnt
+    mount /dev/mapper/cryptroot /mnt
     mount --mkdir "${disk1}p1" /mnt/boot
-    mount --mkdir "${disk2}p2" /mnt/data
-    swapon "${disk2}p1"
+    mount --mkdir /dev/mapper/cryptdata /mnt/data
+    swapon /dev/mapper/cryptswap
 
 else
     # Unsupported disk configuration
@@ -195,7 +278,8 @@ tee /etc/pacman.conf < CONFIG/pacman.conf
 # BASE SYSTEM INSTALLATION
 #==============================================================================
 
-pacstrap /mnt base linux linux-headers linux-firmware
+# Install base system with encryption support
+pacstrap /mnt base linux linux-headers linux-firmware cryptsetup
 
 if [ "$?" -eq 0 ]; then
     echo "pacstrap installation occurred without error."
@@ -210,6 +294,23 @@ read -r -p "Press any key to continue..."
 
 # Generate filesystem table
 genfstab -U /mnt | tee -a  /mnt/etc/fstab
+
+# Save disk and encryption configuration for chroot script
+mkdir -p /mnt/archinstall/CONFIG
+if [ "$nvme_count" -eq 1 ]; then
+    echo "DISK_COUNT=1" > /mnt/archinstall/CONFIG/disk_config.conf
+    echo "DISK1=${disk1}" >> /mnt/archinstall/CONFIG/disk_config.conf
+    echo "ROOT_DEVICE=${disk1}p3" >> /mnt/archinstall/CONFIG/disk_config.conf
+    echo "SWAP_DEVICE=${disk1}p2" >> /mnt/archinstall/CONFIG/disk_config.conf
+elif [ "$nvme_count" -eq 2 ]; then
+    echo "DISK_COUNT=2" > /mnt/archinstall/CONFIG/disk_config.conf
+    echo "DISK1=${disk1}" >> /mnt/archinstall/CONFIG/disk_config.conf
+    echo "DISK2=${disk2}" >> /mnt/archinstall/CONFIG/disk_config.conf
+    echo "ROOT_DEVICE=${disk1}p2" >> /mnt/archinstall/CONFIG/disk_config.conf
+    echo "SWAP_DEVICE=${disk2}p1" >> /mnt/archinstall/CONFIG/disk_config.conf
+    echo "DATA_DEVICE=${disk2}p2" >> /mnt/archinstall/CONFIG/disk_config.conf
+fi
+echo "AES_NI_AVAILABLE=${AES_NI_AVAILABLE}" >> /mnt/archinstall/CONFIG/disk_config.conf
 
 # Copy installation files to target system
 mkdir /mnt/archinstall

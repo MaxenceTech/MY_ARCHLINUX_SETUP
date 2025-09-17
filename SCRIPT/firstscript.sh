@@ -119,12 +119,16 @@ cp /archinstall/CONFIG/ssdt1.aml /etc/initcpio/acpi_override
 # KERNEL CONFIGURATION
 #==============================================================================
 
-# Update mkinitcpio hooks for ACPI support
+# Load disk configuration
+source /archinstall/CONFIG/disk_config.conf
+
+# Update mkinitcpio hooks for ACPI support and encryption
 echo "Updating mkinitcpio configuration..."
 hooksvar=$(grep -v  -n "^#" /etc/mkinitcpio.conf | grep 'HOOKS=')
 ligne="${hooksvar%:*}"
 sed -i "$((ligne)) d" /etc/mkinitcpio.conf
-sed -i "$((ligne-1)) a HOOKS=(systemd autodetect modconf block keyboard sd-vconsole filesystems fsck acpi_override)" /etc/mkinitcpio.conf
+# Add encrypt hook for LUKS support
+sed -i "$((ligne-1)) a HOOKS=(systemd autodetect modconf block keyboard sd-vconsole sd-encrypt filesystems fsck acpi_override)" /etc/mkinitcpio.conf
 
 #==============================================================================
 # SYSTEM PERFORMANCE TWEAKS
@@ -147,46 +151,228 @@ echo "blacklist iTCO_wdt" | tee /etc/modprobe.d/blacklist_intelwatchdog.conf
 # Configure custom kernel modules and microcode
 echo "Configuring bootloader..."
 mkinitcpio-editor -a xe lz4
-pacman -S efibootmgr intel-ucode --noconfirm
+pacman -S efibootmgr intel-ucode systemd-ukify --noconfirm
 pacmanerror=$((pacmanerror + $?))
 
-# Get root partition UUID for bootloader configuration
-PARTUUIDGREP=$(awk '$2 == "/" {print $1}' /etc/fstab)
-SWAPUUIDGREP=$(awk '$3 == "swap" {print $1}' /etc/fstab)
+# Get partition UUIDs for bootloader configuration
+ROOT_UUID=$(awk '$2 == "/" {print $1}' /etc/fstab)
+SWAP_UUID=$(awk '$3 == "swap" {print $1}' /etc/fstab)
+
+# Get the actual device UUIDs for LUKS
+if [ "$DISK_COUNT" -eq 1 ]; then
+    ROOT_DEVICE_UUID=$(blkid -s UUID -o value "$ROOT_DEVICE")
+    SWAP_DEVICE_UUID=$(blkid -s UUID -o value "$SWAP_DEVICE")
+elif [ "$DISK_COUNT" -eq 2 ]; then
+    ROOT_DEVICE_UUID=$(blkid -s UUID -o value "$ROOT_DEVICE")
+    SWAP_DEVICE_UUID=$(blkid -s UUID -o value "$SWAP_DEVICE")
+fi
+
+echo "Root partition UUID: $ROOT_UUID"
+echo "Root device UUID: $ROOT_DEVICE_UUID"
+echo "Swap device UUID: $SWAP_DEVICE_UUID"
+
+#==============================================================================
+# SECURE BOOT SETUP WITH SYSTEMD-UKIFY
+#==============================================================================
+
+echo "Setting up Secure Boot with systemd-ukify..."
+
+# Create directory for Secure Boot keys
+mkdir -p /etc/secureboot/keys
+cd /etc/secureboot/keys
+
+# Generate Secure Boot keys
+echo "Generating Secure Boot keys..."
+
+# Generate Platform Key (PK)
+openssl req -new -x509 -newkey rsa:2048 -subj "/CN=Platform Key/" -keyout PK.key -out PK.crt -days 7300 -nodes -sha256
+
+# Generate Key Exchange Key (KEK)
+openssl req -new -x509 -newkey rsa:2048 -subj "/CN=Key Exchange Key/" -keyout KEK.key -out KEK.crt -days 7300 -nodes -sha256
+
+# Generate Database Key (db)
+openssl req -new -x509 -newkey rsa:2048 -subj "/CN=Signature Database key/" -keyout db.key -out db.crt -days 7300 -nodes -sha256
+
+# Convert certificates to proper format for UEFI
+openssl x509 -in PK.crt -out PK.pem -outform PEM
+openssl x509 -in KEK.crt -out KEK.pem -outform PEM
+openssl x509 -in db.crt -out db.pem -outform PEM
+
+# Set appropriate permissions
+chmod 400 *.key
+chmod 444 *.crt *.pem
+
+echo "Secure Boot keys generated successfully."
+
+# Configure systemd-ukify
+echo "Configuring systemd-ukify..."
+mkdir -p /etc/kernel
+
+# Build command line based on disk configuration
+if [ "$DISK_COUNT" -eq 1 ]; then
+    CMDLINE_BASE="root=UUID=$ROOT_DEVICE_UUID rootfstype=ext4 rd.luks.name=$ROOT_DEVICE_UUID=cryptroot rd.luks.name=$SWAP_DEVICE_UUID=cryptswap resume=/dev/mapper/cryptswap"
+elif [ "$DISK_COUNT" -eq 2 ]; then
+    DATA_DEVICE_UUID=$(blkid -s UUID -o value "$DATA_DEVICE")
+    CMDLINE_BASE="root=UUID=$ROOT_DEVICE_UUID rootfstype=ext4 rd.luks.name=$ROOT_DEVICE_UUID=cryptroot rd.luks.name=$SWAP_DEVICE_UUID=cryptswap rd.luks.name=$DATA_DEVICE_UUID=cryptdata resume=/dev/mapper/cryptswap"
+fi
+
+CMDLINE_COMMON="$CMDLINE_BASE hibernate.compressor=lz4 rw quiet mitigations=auto,nosmt nowatchdog tsc=reliable clocksource=tsc intel_iommu=on iommu=pt vt.global_cursor_default=0 zswap.enabled=1 zswap.shrinker_enabled=1 zswap.compressor=lz4 zswap.max_pool_percent=12 zswap.zpool=zsmalloc"
+
+cat > /etc/kernel/ukify.conf << EOF
+[UKI]
+Linux=/boot/vmlinuz-linux
+Initrd=/boot/intel-ucode.img
+Initrd=/boot/initramfs-linux.img
+Cmdline=$CMDLINE_COMMON
+SecureBootPrivateKey=/etc/secureboot/keys/db.key
+SecureBootCertificate=/etc/secureboot/keys/db.crt
+
+[EFI]
+ImageId=arch
+EOF
+
+echo "systemd-ukify configuration completed."
+
+# Create directory for Unified Kernel Images
+mkdir -p /boot/EFI/Linux
 
 # Install and configure systemd-boot
 bootctl install
 
-# Create bootloader configuration
-echo "default  arch.conf
+# Create bootloader configuration for systemd-ukify UKIs
+echo "default  @saved
 timeout  6
 console-mode max
 editor   no" | tee /boot/loader/loader.conf
 
-# Create boot entries for different configurations
-echo "title   Arch Linux NVIDIA
-linux   /vmlinuz-linux
-initrd  /intel-ucode.img
-initrd  /initramfs-linux.img
-options root=$PARTUUIDGREP resume=$SWAPUUIDGREP hibernate.compressor=lz4 rw quiet mitigations=auto,nosmt nowatchdog tsc=reliable clocksource=tsc intel_iommu=on iommu=pt vt.global_cursor_default=0 zswap.enabled=1 zswap.shrinker_enabled=1 zswap.compressor=lz4 zswap.max_pool_percent=12 zswap.zpool=zsmalloc modprobe.blacklist=kvmfr video=HDMI-A-1:d video=DP-1:d video=DP-2:d" | tee /boot/loader/entries/arch.conf
+#==============================================================================
+# UNIFIED KERNEL IMAGE GENERATION
+#==============================================================================
 
-echo "title   Arch Linux GPU PASSTROUGH
-linux   /vmlinuz-linux
-initrd  /intel-ucode.img
-initrd  /initramfs-linux.img
-options root=$PARTUUIDGREP resume=$SWAPUUIDGREP hibernate.compressor=lz4 rw quiet mitigations=auto,nosmt nowatchdog tsc=reliable clocksource=tsc intel_iommu=on iommu=pt vfio-pci.ids=10de:27a0,10de:22bc vt.global_cursor_default=0 zswap.enabled=1 zswap.shrinker_enabled=1 zswap.compressor=lz4 zswap.max_pool_percent=12 zswap.zpool=zsmalloc" | tee /boot/loader/entries/arch-gpupasstrough.conf
+echo "Generating Unified Kernel Images with systemd-ukify..."
 
-echo "title   Fallback Arch Linux NVIDIA
-linux   /vmlinuz-linux
-initrd  /intel-ucode.img
-initrd  /initramfs-linux-fallback.img
-options root=$PARTUUIDGREP resume=$SWAPUUIDGREP hibernate.compressor=lz4 rw quiet mitigations=auto,nosmt nowatchdog tsc=reliable clocksource=tsc intel_iommu=on iommu=pt vt.global_cursor_default=0 zswap.enabled=1 zswap.shrinker_enabled=1 zswap.compressor=lz4 zswap.max_pool_percent=12 zswap.zpool=zsmalloc modprobe.blacklist=kvmfr video=HDMI-A-1:d video=DP-1:d video=DP-2:d" | tee /boot/loader/entries/fallback-arch.conf
+# Generate primary UKI with NVIDIA support
+ukify build \
+    --linux=/boot/vmlinuz-linux \
+    --initrd=/boot/intel-ucode.img \
+    --initrd=/boot/initramfs-linux.img \
+    --cmdline="$CMDLINE_COMMON modprobe.blacklist=kvmfr video=HDMI-A-1:d video=DP-1:d video=DP-2:d" \
+    --secureboot-private-key=/etc/secureboot/keys/db.key \
+    --secureboot-certificate=/etc/secureboot/keys/db.crt \
+    --output=/boot/EFI/Linux/arch-nvidia.efi
 
-echo "title   Fallback Arch Linux GPU PASSTROUGH
-linux   /vmlinuz-linux
-initrd  /intel-ucode.img
-initrd  /initramfs-linux-fallback.img
-options root=$PARTUUIDGREP resume=$SWAPUUIDGREP hibernate.compressor=lz4 rw quiet mitigations=auto,nosmt nowatchdog tsc=reliable clocksource=tsc intel_iommu=on iommu=pt vfio-pci.ids=10de:27a0,10de:22bc vt.global_cursor_default=0 zswap.enabled=1 zswap.shrinker_enabled=1 zswap.compressor=lz4 zswap.max_pool_percent=12 zswap.zpool=zsmalloc" | tee /boot/loader/entries/fallback-arch-gpupasstrough.conf
+# Generate UKI for GPU passthrough
+ukify build \
+    --linux=/boot/vmlinuz-linux \
+    --initrd=/boot/intel-ucode.img \
+    --initrd=/boot/initramfs-linux.img \
+    --cmdline="$CMDLINE_COMMON vfio-pci.ids=10de:27a0,10de:22bc" \
+    --secureboot-private-key=/etc/secureboot/keys/db.key \
+    --secureboot-certificate=/etc/secureboot/keys/db.crt \
+    --output=/boot/EFI/Linux/arch-gpupassthrough.efi
+
+# Generate fallback UKI
+ukify build \
+    --linux=/boot/vmlinuz-linux \
+    --initrd=/boot/intel-ucode.img \
+    --initrd=/boot/initramfs-linux-fallback.img \
+    --cmdline="$CMDLINE_COMMON modprobe.blacklist=kvmfr video=HDMI-A-1:d video=DP-1:d video=DP-2:d" \
+    --secureboot-private-key=/etc/secureboot/keys/db.key \
+    --secureboot-certificate=/etc/secureboot/keys/db.crt \
+    --output=/boot/EFI/Linux/arch-fallback.efi
+
+echo "Unified Kernel Images generated successfully."
+
+# Set up automatic UKI generation on kernel updates
+mkdir -p /etc/kernel/install.d
+cat > /etc/kernel/install.d/90-ukify.install << 'EOF'
+#!/bin/bash
+# Automatic UKI generation script for kernel updates
+
+if [ "$1" = "add" ]; then
+    KERNEL_VERSION="$2"
+    KERNEL_IMAGE="$3"
+    INITRD_IMAGE="/boot/initramfs-linux.img"
+    FALLBACK_INITRD="/boot/initramfs-linux-fallback.img"
+    
+    # Read disk configuration
+    source /archinstall/CONFIG/disk_config.conf
+    ROOT_DEVICE_UUID=$(blkid -s UUID -o value "$ROOT_DEVICE")
+    SWAP_DEVICE_UUID=$(blkid -s UUID -o value "$SWAP_DEVICE")
+    
+    # Build command line based on disk configuration
+    if [ "$DISK_COUNT" -eq 1 ]; then
+        CMDLINE_BASE="root=UUID=$ROOT_DEVICE_UUID rootfstype=ext4 rd.luks.name=$ROOT_DEVICE_UUID=cryptroot rd.luks.name=$SWAP_DEVICE_UUID=cryptswap resume=/dev/mapper/cryptswap"
+    elif [ "$DISK_COUNT" -eq 2 ]; then
+        DATA_DEVICE_UUID=$(blkid -s UUID -o value "$DATA_DEVICE")
+        CMDLINE_BASE="root=UUID=$ROOT_DEVICE_UUID rootfstype=ext4 rd.luks.name=$ROOT_DEVICE_UUID=cryptroot rd.luks.name=$SWAP_DEVICE_UUID=cryptswap rd.luks.name=$DATA_DEVICE_UUID=cryptdata resume=/dev/mapper/cryptswap"
+    fi
+    
+    CMDLINE_COMMON="$CMDLINE_BASE hibernate.compressor=lz4 rw quiet mitigations=auto,nosmt nowatchdog tsc=reliable clocksource=tsc intel_iommu=on iommu=pt vt.global_cursor_default=0 zswap.enabled=1 zswap.shrinker_enabled=1 zswap.compressor=lz4 zswap.max_pool_percent=12 zswap.zpool=zsmalloc"
+    
+    # Generate primary UKI
+    ukify build \
+        --linux="$KERNEL_IMAGE" \
+        --initrd=/boot/intel-ucode.img \
+        --initrd="$INITRD_IMAGE" \
+        --cmdline="$CMDLINE_COMMON modprobe.blacklist=kvmfr video=HDMI-A-1:d video=DP-1:d video=DP-2:d" \
+        --secureboot-private-key=/etc/secureboot/keys/db.key \
+        --secureboot-certificate=/etc/secureboot/keys/db.crt \
+        --output="/boot/EFI/Linux/arch-nvidia-${KERNEL_VERSION}.efi"
+    
+    # Create symlink for default
+    ln -sf "arch-nvidia-${KERNEL_VERSION}.efi" "/boot/EFI/Linux/arch-nvidia.efi"
+    
+    # Generate fallback UKI
+    ukify build \
+        --linux="$KERNEL_IMAGE" \
+        --initrd=/boot/intel-ucode.img \
+        --initrd="$FALLBACK_INITRD" \
+        --cmdline="$CMDLINE_COMMON modprobe.blacklist=kvmfr video=HDMI-A-1:d video=DP-1:d video=DP-2:d" \
+        --secureboot-private-key=/etc/secureboot/keys/db.key \
+        --secureboot-certificate=/etc/secureboot/keys/db.crt \
+        --output="/boot/EFI/Linux/arch-fallback-${KERNEL_VERSION}.efi"
+    
+    ln -sf "arch-fallback-${KERNEL_VERSION}.efi" "/boot/EFI/Linux/arch-fallback.efi"
+fi
+EOF
+
+chmod +x /etc/kernel/install.d/90-ukify.install
+
+#==============================================================================
+# SECURE BOOT KEY ENROLLMENT INSTRUCTIONS
+#==============================================================================
+
+echo "=============================================================================="
+echo "IMPORTANT: SECURE BOOT KEY ENROLLMENT"
+echo "=============================================================================="
+echo ""
+echo "Your Secure Boot keys have been generated and are located in:"
+echo "/etc/secureboot/keys/"
+echo ""
+echo "After reboot, you MUST enroll these keys in your UEFI firmware:"
+echo ""
+echo "1. Copy the key files to a USB drive (formatted as FAT32):"
+echo "   - PK.crt (Platform Key)"
+echo "   - KEK.crt (Key Exchange Key)"  
+echo "   - db.crt (Signature Database Key)"
+echo ""
+echo "2. Reboot and enter UEFI Setup (usually F2, F12, or DEL during boot)"
+echo ""
+echo "3. Navigate to Security settings and find Secure Boot options"
+echo ""
+echo "4. Enable Custom Mode or Advanced Secure Boot options"
+echo ""
+echo "5. Clear existing keys (if any) and enroll your custom keys:"
+echo "   - First enroll db.crt (Database Key)"
+echo "   - Then enroll KEK.crt (Key Exchange Key)"
+echo "   - Finally enroll PK.crt (Platform Key) - THIS ENABLES SECURE BOOT"
+echo ""
+echo "6. Save settings and exit UEFI Setup"
+echo ""
+echo "Your system will now boot with Secure Boot enabled using your custom keys."
+echo "=============================================================================="
+echo ""
 
 # Update bootloader and enable automatic updates
 bootctl update || [[ $? -eq 1 ]]
