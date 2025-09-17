@@ -461,10 +461,10 @@ if [ -d /data ]; then
 fi
 
 # Fix lid
-varlidline=$(sudo grep -n '#HoldoffTimeoutSec' /etc/systemd/logind.conf)
-ligne4="${varlidline%:*}"
-sudo sed -i "$((ligne4)) d" /etc/systemd/logind.conf
-sudo sed -i "$((ligne4-1)) a HoldoffTimeoutSec=10s" /etc/systemd/logind.conf
+sudo mkdir /etc/systemd/logind.conf.d
+echo "[Login]
+HoldoffTimeoutSec=10s" | sudo tee /etc/systemd/logind.conf.d/99-fixlid.conf
+
 
 # Wayland support enable 
 
