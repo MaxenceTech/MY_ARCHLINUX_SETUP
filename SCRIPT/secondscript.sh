@@ -329,7 +329,7 @@ yayerror=$((yayerror + $?))
 
 # Disable coredump
 
-mkdir /etc/systemd/coredump.conf.d
+sudo mkdir /etc/systemd/coredump.conf.d
 echo "[Coredump]
 Storage=none
 ProcessSizeMax=0" | sudo tee /etc/systemd/coredump.conf.d/99-custom.conf
