@@ -152,6 +152,12 @@ pacmanerror=$((pacmanerror + $?))
 
 # Get root partition UUID for bootloader configuration
 luks_dev=$(LC_ALL=C cryptsetup status root | awk -F': ' '/device:/ {print $2}')
+# Trim leading
+luks_dev="${luks_dev#"${luks_dev%%[![:space:]]*}"}"
+# Trim trailing
+luks_dev="${luks_dev%"${luks_dev##*[![:space:]]}"}"
+
+luks_uuid=$(cryptsetup luksUUID -- "$luks_dev")
 PARTUUIDGREP=$(cryptsetup luksUUID "$luks_dev")
 SWAPUUIDGREP=$(awk '$3 == "swap" {print $1}' /etc/fstab)
 
