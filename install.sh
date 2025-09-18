@@ -107,22 +107,22 @@ elif [ "$nvme_count" -eq 1 ]; then
     echo "Single NVMe disk detected: $disk1"
     
     # Partition single disk: EFI + Swap + Root
-    sgdisk -Z "$disk1"
-    sgdisk --set-alignment=2048 --align-end -n 1:0:+2G -t 1:ef00 "$disk1"    # EFI partition
-    sgdisk --set-alignment=2048 --align-end -n 2:0:+72G -t 2:8200 "$disk1"    # Swap partition
-    sgdisk --set-alignment=2048 --align-end -n 3:0:0 -t 3:8304 "$disk1"      # Root partition
+	sgdisk -Z "$disk1"
+	sgdisk --set-alignment=2048 --align-end -n 1:0:+2G -t 1:ef00 "$disk1"    # EFI partition
+	sgdisk --set-alignment=2048 --align-end -n 2:0:+72G -t 2:8200 "$disk1"    # Swap partition
+	sgdisk --set-alignment=2048 --align-end -n 3:0:0 -t 3:8304 "$disk1"      # Root partition
 
 	cryptsetup luksFormat \
-  		--type=luks2 \
-  		--cipher=aes-xts-plain64 \
-  		--key-size=512 \
-  		--pbkdf=argon2id \
-  		--iter-time=4000 \
-  		--verify-passphrase \
-  		--label=cryptroot \
-  		--pbkdf-memory=2097152 \
-  		--pbkdf-parallel=8 \
-  		"${disk1}p3"
+		--type=luks2 \
+		--cipher=aes-xts-plain64 \
+		--key-size=512 \
+		--pbkdf=argon2id \
+		--iter-time=4000 \
+		--verify-passphrase \
+		--label=cryptroot \
+		--pbkdf-memory=2097152 \
+		--pbkdf-parallel=8 \
+		"${disk1}p3"
 	cryptsetup open "${disk1}p3" root
  
     # Create filesystems
