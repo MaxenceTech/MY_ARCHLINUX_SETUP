@@ -132,7 +132,7 @@ elif [ "$nvme_count" -eq 1 ]; then
 
     # Mount filesystems
     mount /dev/mapper/root /mnt
-    mount --mkdir "${disk1}p1" /mnt/efi
+    mount --mkdir -t vfat -o fmask=0077,dmask=0077 "${disk1}p1" /mnt/efi
     swapon "${disk1}p2"
 
 elif [ "$nvme_count" -eq 2 ]; then
@@ -196,7 +196,7 @@ elif [ "$nvme_count" -eq 2 ]; then
 
     # Mount all filesystems
     mount /dev/mapper/root /mnt
-    mount --mkdir "${disk1}p1" /mnt/efi
+    mount --mkdir -t vfat -o fmask=0077,dmask=0077 "${disk1}p1" /mnt/efi
     mount --mkdir "${disk2}p2" /mnt/data
     swapon "${disk2}p1"
 
