@@ -194,6 +194,9 @@ gpupasstrough_options="--cmdline /etc/kernel/arch_gpupasstrough_cmdline"
 gpupasstrough_fallback_uki="/efi/EFI/Linux/gpupasstrough_fallback-linux.efi"
 gpupasstrough_fallback_options="--cmdline /etc/kernel/arch_gpupasstrough_cmdline"' | tee /etc/mkinitcpio.d/linux.preset
 
+rm /boot/initramfs-linux.img
+rm initramfs-linux-fallback.img
+
 # Update bootloader and enable automatic updates
 bootctl update || [[ $? -eq 1 ]]
 systemctl enable systemd-boot-update.service
