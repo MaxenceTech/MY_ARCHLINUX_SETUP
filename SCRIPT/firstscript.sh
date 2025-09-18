@@ -191,6 +191,8 @@ rm /boot/initramfs-linux-fallback.img
 # Install and configure systemd-boot
 bootctl install
 
+read -r -p "Bootloader installed. Press any key to continue..."
+
 # Create bootloader configuration
 echo "default  @saved
 timeout  6
