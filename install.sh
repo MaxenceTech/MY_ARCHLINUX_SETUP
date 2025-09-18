@@ -112,7 +112,7 @@ elif [ "$nvme_count" -eq 1 ]; then
     sgdisk --set-alignment=2048 --align-end -n 2:0:+72G -t 2:8200 "$disk1"    # Swap partition
     sgdisk --set-alignment=2048 --align-end -n 3:0:0 -t 3:8304 "$disk1"      # Root partition
 
-	cryptsetup luksFormat \
+	cryptsetup luksFormat -q \
   		--type=luks2 \
   		--cipher=aes-xts-plain64 \
   		--key-size=512 \
@@ -172,7 +172,7 @@ elif [ "$nvme_count" -eq 2 ]; then
     # Partition primary disk: EFI + Root
     sgdisk --set-alignment=2048 --align-end -n 1:0:+2G -t 1:ef00 "$disk1"       # EFI partition
     sgdisk --set-alignment=2048 --align-end -n 2:0:0 -t 2:8304 "$disk1"        # Root partition
-	cryptsetup luksFormat \
+	cryptsetup luksFormat -q \
   		--type=luks2 \
   		--cipher=aes-xts-plain64 \
   		--key-size=512 \
