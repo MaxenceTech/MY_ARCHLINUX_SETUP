@@ -81,6 +81,12 @@ for swap in $(cat /proc/swaps | grep '/dev/nvme' | cut -d' ' -f1); do
   sudo swapoff $swap 2>/dev/null || true
 done
 
+for disk in /dev/nvme*n1; do
+  echo "Wipe $disk..."
+  wipefs -af "$disk"
+done
+
+
 sleep 20
 
 #==============================================================================
