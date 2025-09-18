@@ -154,15 +154,6 @@ pacmanerror=$((pacmanerror + $?))
 PARTUUIDGREP=$(awk '$2 == "/" {print $1}' /etc/fstab)
 SWAPUUIDGREP=$(awk '$3 == "swap" {print $1}' /etc/fstab)
 
-# Install and configure systemd-boot
-bootctl install
-
-# Create bootloader configuration
-echo "default  @saved
-timeout  6
-console-mode max
-editor   no" | tee /boot/loader/loader.conf
-
 # Create boot entries for different configurations
 
 echo "root=$PARTUUIDGREP resume=$SWAPUUIDGREP hibernate.compressor=lz4 rw quiet mitigations=auto,nosmt nowatchdog tsc=reliable clocksource=tsc intel_iommu=on iommu=pt vt.global_cursor_default=0 zswap.enabled=1 zswap.shrinker_enabled=1 zswap.compressor=lz4 zswap.max_pool_percent=12 zswap.zpool=zsmalloc modprobe.blacklist=kvmfr video=HDMI-A-1:d video=DP-1:d video=DP-2:d" | tee /etc/kernel/arch_cmdline
@@ -196,6 +187,17 @@ gpupasstrough_fallback_options="--cmdline /etc/kernel/arch_gpupasstrough_cmdline
 
 rm /boot/initramfs-linux.img
 rm /boot/initramfs-linux-fallback.img
+
+# Install and configure systemd-boot
+bootctl install
+
+# Create bootloader configuration
+echo "default  @saved
+timeout  6
+console-mode max
+editor   no" | tee /boot/loader/loader.conf
+
+mkinitcpio -p linux
 
 # Update bootloader and enable automatic updates
 bootctl update || [[ $? -eq 1 ]]
