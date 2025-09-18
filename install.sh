@@ -81,12 +81,7 @@ for swap in $(cat /proc/swaps | grep '/dev/nvme' | cut -d' ' -f1); do
   sudo swapoff $swap 2>/dev/null || true
 done
 
-for disk in /dev/nvme*n1; do
-  echo "Sanitizing $disk..."
-  nvme sanitize "$disk" -a 0x02
-done
-
-sleep 120
+sleep 20
 
 #==============================================================================
 # DISK PARTITIONING AND FILESYSTEM SETUP
@@ -209,13 +204,6 @@ else
     echo "This script only handles up to 2 NVMe disks. Exit"
     exit 1
 fi
-
-#==============================================================================
-# PACKAGE MANAGER CONFIGURATION
-#==============================================================================
-
-# Copy custom pacman configuration
-tee /etc/pacman.conf < CONFIG/pacman.conf
 
 #==============================================================================
 # BASE SYSTEM INSTALLATION
