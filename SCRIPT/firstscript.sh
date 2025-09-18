@@ -151,11 +151,8 @@ pacman -S efibootmgr intel-ucode --noconfirm
 pacmanerror=$((pacmanerror + $?))
 
 # Get root partition UUID for bootloader configuration
-PARTUUIDGREP=$(awk '$2 == "/" {print $1}' /etc/fstab)
+PARTUUIDGREP=$(awk '$2 == "/" {print $1}' /etc/fstab | cut -d "=" -f 2)
 SWAPUUIDGREP=$(awk '$3 == "swap" {print $1}' /etc/fstab)
-
-echo "UUID=PARTUUIDGREP"
-read -rp "test"
 
 # Create boot entries for different configurations
 
