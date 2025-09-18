@@ -195,7 +195,7 @@ bootctl install
 echo "default  @saved
 timeout  6
 console-mode max
-editor   no" | tee /boot/loader/loader.conf
+editor   no" | tee /efi/loader/loader.conf
 
 mkinitcpio -p linux
 
