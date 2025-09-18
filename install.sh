@@ -81,12 +81,7 @@ for swap in $(cat /proc/swaps | grep '/dev/nvme' | cut -d' ' -f1); do
   sudo swapoff $swap 2>/dev/null || true
 done
 
-for disk in /dev/nvme*n1; do
-  echo "Sanitizing $disk..."
-  nvme sanitize "$disk" -a 0x02
-done
-
-sleep 120
+sleep 20
 
 #==============================================================================
 # DISK PARTITIONING AND FILESYSTEM SETUP
