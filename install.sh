@@ -123,7 +123,7 @@ elif [ "$nvme_count" -eq 1 ]; then
   		--pbkdf-memory=2097152 \
   		--pbkdf-parallel=8 \
   		"${disk1}p3"
-	cryptsetup open "${disk1}p3 root
+	cryptsetup open "${disk1}p3" root
  
     # Create filesystems
     mkfs.fat -F32 "${disk1}p1"
@@ -183,7 +183,7 @@ elif [ "$nvme_count" -eq 2 ]; then
   		--pbkdf-memory=2097152 \
   		--pbkdf-parallel=8 \
   		"${disk1}p2"
-	cryptsetup open "${disk1}p2 root
+	cryptsetup open "${disk1}p2" root
 	
     mkfs.fat -F32 "${disk1}p1"
     mkfs.ext4 /dev/mapper/root
