@@ -154,6 +154,9 @@ pacmanerror=$((pacmanerror + $?))
 PARTUUIDGREP=$(awk '$2 == "/" {print $1}' /etc/fstab)
 SWAPUUIDGREP=$(awk '$3 == "swap" {print $1}' /etc/fstab)
 
+echo "UUID=PARTUUIDGREP"
+read -rp "test"
+
 # Create boot entries for different configurations
 
 echo "rd.luks.name=$PARTUUIDGREP=root root=/dev/mapper/root resume=$SWAPUUIDGREP hibernate.compressor=lz4 rw quiet mitigations=auto,nosmt nowatchdog tsc=reliable clocksource=tsc intel_iommu=on iommu=pt vt.global_cursor_default=0 zswap.enabled=1 zswap.shrinker_enabled=1 zswap.compressor=lz4 zswap.max_pool_percent=12 zswap.zpool=zsmalloc modprobe.blacklist=kvmfr video=HDMI-A-1:d video=DP-1:d video=DP-2:d" | tee /etc/kernel/arch_cmdline
