@@ -159,7 +159,7 @@ luks_dev="${luks_dev%"${luks_dev##*[![:space:]]}"}"
 
 PARTUUIDGREP=$(cryptsetup luksUUID -- "$luks_dev")
 SWAPUUIDGREP=$(findmnt -no UUID -T /swapfile)
-RESUMEOFFSET=$(filefrag -v swap_file | awk '$1=="0:" {print substr($4, 1, length($4)-2)}')
+RESUMEOFFSET=$(filefrag -v /swapfile | awk '$1=="0:" {print substr($4, 1, length($4)-2)}')
 
 # Create boot entries for different configurations
 
