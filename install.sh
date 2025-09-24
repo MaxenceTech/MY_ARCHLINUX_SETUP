@@ -110,8 +110,7 @@ elif [ "$nvme_count" -eq 1 ]; then
     # Partition single disk: EFI + Swap + Root
     sgdisk -Z "$disk1"
     sgdisk --set-alignment=2048 --align-end -n 1:0:+2G -t 1:ef00 "$disk1"    # EFI partition
-    sgdisk --set-alignment=2048 --align-end -n 2:0:+72G -t 2:8200 "$disk1"    # Swap partition
-    sgdisk --set-alignment=2048 --align-end -n 3:0:0 -t 3:8304 "$disk1"      # Root partition
+    sgdisk --set-alignment=2048 --align-end -n 2:0:0 -t 2:8304 "$disk1"      # Root partition
 
     cryptsetup luksFormat -q \
 	    --type=luks2 \
@@ -123,18 +122,18 @@ elif [ "$nvme_count" -eq 1 ]; then
 	    --label=cryptroot \
 	    --pbkdf-memory=2097152 \
 	    --pbkdf-parallel=4 \
-	    "${disk1}p3"
-    cryptsetup open "${disk1}p3" root
+	    "${disk1}p2"
+    cryptsetup open "${disk1}p2" root
  
     # Create filesystems
     mkfs.fat -F32 "${disk1}p1"
-    mkswap --label diskswap "${disk1}p2"
     mkfs.ext4 /dev/mapper/root
 
     # Mount filesystems
     mount /dev/mapper/root /mnt
     mount --mkdir -t vfat -o fmask=0077,dmask=0077 "${disk1}p1" /mnt/efi
-    swapon "${disk1}p2"
+	mkswap -U clear --label swapfile --size 72G --file /mnt/swapfile
+    swapon /mnt/swapfile
 
 elif [ "$nvme_count" -eq 2 ]; then
     # Dual NVMe disk configuration
@@ -190,16 +189,16 @@ elif [ "$nvme_count" -eq 2 ]; then
     mkfs.ext4 /dev/mapper/root
 
     # Partition secondary disk: Swap + Data
-    sgdisk --set-alignment=2048 --align-end -n 1:0:+72G -t 1:8200 "$disk2"      # Swap partition
-    sgdisk --set-alignment=2048 --align-end -n 2:0:0 -t 2:8300 "$disk2"        # Data partition
-    mkswap --label diskswap "${disk2}p1"
-    mkfs.ext4 "${disk2}p2"
+    sgdisk --set-alignment=2048 --align-end -n 1:0:0 -t 1:8300 "$disk2"        # Data partition
+
+    mkfs.ext4 "${disk2}p1"
 
     # Mount all filesystems
     mount /dev/mapper/root /mnt
     mount --mkdir -t vfat -o fmask=0077,dmask=0077 "${disk1}p1" /mnt/efi
-    mount --mkdir "${disk2}p2" /mnt/data
-    swapon "${disk2}p1"
+    mount --mkdir "${disk2}p1" /mnt/data
+	mkswap -U clear --label swapfile --size 72G --file /mnt/swapfile
+    swapon /mnt/swapfile
 
 else
     # Unsupported disk configuration
