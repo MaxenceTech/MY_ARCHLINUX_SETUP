@@ -698,10 +698,10 @@ sudo cat /archinstall/CONFIG/qemu | sudo tee /etc/libvirt/hooks/qemu > /dev/null
 sudo chmod +x /etc/libvirt/hooks/qemu
 
 #Fix Upower
-sudo sed -i 's/^CriticalPowerAction=.*$/CriticalPowerAction=Hibernate/' /etc/UPower/UPower.conf
+sudo sed -i 's/^CriticalPowerAction=.*$/CriticalPowerAction=PowerOff/' /etc/UPower/UPower.conf
 sudo sed -i 's/^PercentageLow=.*$/PercentageLow=20.0/' /etc/UPower/UPower.conf
 sudo sed -i 's/^PercentageCritical=.*$/PercentageCritical=12.0/' /etc/UPower/UPower.conf
-sudo sed -i 's/^PercentageAction=.*$/PercentageAction=10.0/' /etc/UPower/UPower.conf
+sudo sed -i 's/^PercentageAction=.*$/PercentageAction=8.0/' /etc/UPower/UPower.conf
 
 
 # delete useless tools
