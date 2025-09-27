@@ -703,6 +703,16 @@ sudo sed -i 's/^PercentageLow=.*$/PercentageLow=20.0/' /etc/UPower/UPower.conf
 sudo sed -i 's/^PercentageCritical=.*$/PercentageCritical=12.0/' /etc/UPower/UPower.conf
 sudo sed -i 's/^PercentageAction=.*$/PercentageAction=8.0/' /etc/UPower/UPower.conf
 
+# no hibernate
+
+sudo mkdir /etc/systemd/sleep.conf.d
+echo "[Sleep]
+AllowHibernation=no
+AllowHybridSleep=no
+AllowSuspendThenHibernate=no" | sudo tee /etc/systemd/sleep.conf.d/no-hibernate.conf
+
+echo "[Login]
+HibernateKeyIgnoreInhibited=no" | sudo tee /etc/systemd/logind.conf.d/no-hibernate.conf
 
 # delete useless tools
 sudo rm -rf /archinstall
