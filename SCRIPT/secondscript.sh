@@ -260,6 +260,7 @@ pacmanerror=$((pacmanerror + $?))
 sudo mkinitcpio-editor -a kvm kvm_intel virtio virtio_blk virtio_pci virtio_net vfio vfio_iommu_type1 vfio_pci
 sudo systemctl enable libvirtd.service
 echo "options kvm_intel nested=1" | sudo tee /etc/modprobe.d/20-kvm-intel.conf
+sudo usermod -aG kvm "$USER"
 sudo usermod -aG libvirt "$USER"
 echo 'export LIBVIRT_DEFAULT_URI="qemu:///system"' >> ~/.bashrc
 echo 'export LIBVIRT_DEFAULT_URI="qemu:///system"' >> ~/.zshrc 
@@ -673,7 +674,7 @@ cd /tmp/looking-glass-B7/module/ || exit 1
 sudo dkms install "."
 echo "options kvmfr static_size_mb=64" | sudo tee /etc/modprobe.d/90-kvmfr.conf
 echo "kvmfr" | sudo tee /etc/modules-load.d/kvmfr.conf
-echo "SUBSYSTEM==\"kvmfr\", OWNER=\"$(whoami)\", GROUP=\"kvm\", MODE=\"0660\"" | sudo tee /etc/udev/rules.d/99-kvmfr.rules
+echo "SUBSYSTEM==\"kvmfr\", GROUP=\"kvm\", MODE=\"0660\"" | sudo tee /etc/udev/rules.d/99-kvmfr.rules
 echo 'cgroup_device_acl = [
     "/dev/null", "/dev/full", "/dev/zero",
     "/dev/random", "/dev/urandom",
