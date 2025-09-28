@@ -238,9 +238,19 @@ if [ -z "$disk2" ]; then
 		--keyfile-size=2048 \
 	    "${disk2}p1"
     cryptsetup open "${disk2}p1" data --key-file=/mnt/etc/cryptsetup-keys.d/secondssd-keyfile.key
+
+	data_luks_dev=$(LC_ALL=C cryptsetup status root | awk -F': ' '/device:/ {print $2}')
+	# Trim leading
+	data_luks_dev="${data_luks_dev#"${data_luks_dev%%[![:space:]]*}"}"
+	# Trim trailing
+	data_luks_dev="${data_luks_dev%"${data_luks_dev##*[![:space:]]}"}"
+
+	DATAPARTUUIDGREP=$(cryptsetup luksUUID -- "$data_luks_dev")
 	
     mkfs.ext4 /dev/mapper/data
 	mount --mkdir /dev/mapper/data /mnt/data
+
+	echo "cryptsecondssd UUID=$DATAPARTUUIDGREP  /etc/cryptsetup-keys.d/secondssd-keyfile.key luks,discard" | tee -a /etc/crypttab
 fi
 # Generate filesystem table
 genfstab -U /mnt | tee -a  /mnt/etc/fstab
