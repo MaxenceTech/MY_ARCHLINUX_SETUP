@@ -178,7 +178,7 @@ elif [ "$nvme_count" -eq 2 ]; then
 	    --pbkdf=argon2id \
 	    --iter-time=4000 \
 	    --verify-passphrase \
-	    --label=cryptroot \
+	    --label=encrypted_root \
 	    --pbkdf-memory=2097152 \
 	    --pbkdf-parallel=4 \
 	    "${disk1}p2"
