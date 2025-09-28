@@ -208,7 +208,6 @@ mkinitcpio -p linux
 
 # Update bootloader and enable automatic updates
 bootctl update || [[ $? -eq 1 ]]
-systemctl enable systemd-boot-update.service
 
 #==============================================================================
 # INSTALLATION SUMMARY
