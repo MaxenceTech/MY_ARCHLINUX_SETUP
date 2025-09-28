@@ -110,7 +110,7 @@ elif [ "$nvme_count" -eq 1 ]; then
     # Partition single disk: EFI + Swap + Root
     sgdisk -Z "$disk1"
     sgdisk --set-alignment=2048 --align-end -n 1:0:+2G -t 1:ef00 "$disk1"    # EFI partition
-    sgdisk --set-alignment=2048 --align-end -n 2:0:+8G -t 2:8200 "$disk1"    # Swap partition
+    sgdisk --set-alignment=2048 --align-end -n 2:0:+16G -t 2:8200 "$disk1"    # Swap partition
     sgdisk --set-alignment=2048 --align-end -n 3:0:0 -t 3:8304 "$disk1"      # Root partition
 
     # Create filesystems
@@ -164,7 +164,7 @@ elif [ "$nvme_count" -eq 2 ]; then
     mkfs.ext4 "${disk1}p2"
 
     # Partition secondary disk: Swap + Data
-    sgdisk --set-alignment=2048 --align-end -n 1:0:+8G -t 1:8200 "$disk2"      # Swap partition
+    sgdisk --set-alignment=2048 --align-end -n 1:0:+16G -t 1:8200 "$disk2"      # Swap partition
     sgdisk --set-alignment=2048 --align-end -n 2:0:0 -t 2:8300 "$disk2"        # Data partition
     mkswap --label diskswap "${disk2}p1"
     mkfs.ext4 "${disk2}p2"
