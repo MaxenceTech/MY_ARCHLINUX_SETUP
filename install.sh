@@ -167,7 +167,6 @@ elif [ "$nvme_count" -eq 2 ]; then
 
     # Clear partition tables
     sgdisk -Z "$disk1"
-    sgdisk -Z "$disk2"
 
     # Partition primary disk: EFI + Root
     sgdisk --set-alignment=2048 --align-end -n 1:0:+2G -t 1:ef00 "$disk1"       # EFI partition
@@ -220,7 +219,8 @@ read -r -p "Press any key to continue..."
 #==============================================================================
 # SYSTEM CONFIGURATION PREPARATION
 #==============================================================================
-if [ -z "$disk2" ]; then
+if [ "$nvme_count" -eq 2 ]; then
+    sgdisk -Z "$disk2"
 	dd bs=512 count=4 if=/dev/random iflag=fullblock | install -m 0600 /dev/stdin /mnt/etc/cryptsetup-keys.d/secondssd-keyfile.key
 	# Partition secondary disk: Swap + Data
     sgdisk --set-alignment=2048 --align-end -n 1:0:0 -t 1:8300 "$disk2"        # Data partition
