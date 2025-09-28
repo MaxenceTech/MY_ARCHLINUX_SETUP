@@ -31,7 +31,7 @@ pacmanerror=$((pacmanerror + $?))
 
 # Install essential system packages
 echo "Installing base development and networking packages..."
-pacman -S nano base-devel openssh networkmanager wpa_supplicant wireless_tools \
+pacman -S sbctl nano base-devel openssh networkmanager wpa_supplicant wireless_tools \
     netctl dialog iputils man git --noconfirm
 pacmanerror=$((pacmanerror + $?))
 
