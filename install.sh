@@ -188,15 +188,9 @@ elif [ "$nvme_count" -eq 2 ]; then
     mkfs.fat -F32 "${disk1}p1"
     mkfs.ext4 /dev/mapper/root
 
-    # Partition secondary disk: Swap + Data
-    sgdisk --set-alignment=2048 --align-end -n 1:0:0 -t 1:8300 "$disk2"        # Data partition
-
-    mkfs.ext4 "${disk2}p1"
-
     # Mount all filesystems
     mount /dev/mapper/root /mnt
     mount --mkdir -t vfat -o fmask=0077,dmask=0077 "${disk1}p1" /mnt/efi
-    mount --mkdir "${disk2}p1" /mnt/data
 	mkswap -U clear --label swapfile --size 16G --file /mnt/swapfile
     swapon /mnt/swapfile
 
@@ -226,7 +220,27 @@ read -r -p "Press any key to continue..."
 #==============================================================================
 # SYSTEM CONFIGURATION PREPARATION
 #==============================================================================
+if [ -z "$disk2" ]; then
+	dd bs=512 count=4 if=/dev/random iflag=fullblock | install -m 0600 /dev/stdin /mnt/etc/cryptsetup-keys.d/secondssd-keyfile.key
+	# Partition secondary disk: Swap + Data
+    sgdisk --set-alignment=2048 --align-end -n 1:0:0 -t 1:8300 "$disk2"        # Data partition
 
+	cryptsetup luksFormat -q \
+	    --type=luks2 \
+	    --cipher=aes-xts-plain64 \
+	    --key-size=512 \
+	    --pbkdf=argon2id \
+	    --iter-time=4000 \
+	    --label=cryptsecondssd \
+	    --pbkdf-memory=2097152 \
+	    --pbkdf-parallel=4 \
+		--key-file=/mnt/etc/cryptsetup-keys.d/secondssd-keyfile.key  \
+	    "${disk2}p1"
+    cryptsetup open "${disk2}p1" data --key-file=/mnt/etc/cryptsetup-keys.d/secondssd-keyfile.key
+	
+    mkfs.ext4 /dev/mapper/data
+	mount --mkdir /dev/mapper/data /mnt/data
+fi
 # Generate filesystem table
 genfstab -U /mnt | tee -a  /mnt/etc/fstab
 
