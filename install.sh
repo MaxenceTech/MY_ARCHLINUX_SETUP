@@ -211,17 +211,10 @@ else
 fi
 
 #==============================================================================
-# PACKAGE MANAGER CONFIGURATION
-#==============================================================================
-
-# Copy custom pacman configuration
-tee /etc/pacman.conf < CONFIG/pacman.conf
-
-#==============================================================================
 # BASE SYSTEM INSTALLATION
 #==============================================================================
 
-pacstrap /mnt base linux linux-headers linux-firmware
+pacstrap -K /mnt base linux linux-headers linux-firmware
 
 if [ "$?" -eq 0 ]; then
     echo "pacstrap installation occurred without error."
