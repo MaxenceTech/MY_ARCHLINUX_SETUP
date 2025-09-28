@@ -235,6 +235,7 @@ if [ -z "$disk2" ]; then
 	    --pbkdf-memory=2097152 \
 	    --pbkdf-parallel=4 \
 		--key-file=/mnt/etc/cryptsetup-keys.d/secondssd-keyfile.key  \
+		--keyfile-size=2048 \
 	    "${disk2}p1"
     cryptsetup open "${disk2}p1" data --key-file=/mnt/etc/cryptsetup-keys.d/secondssd-keyfile.key
 	
