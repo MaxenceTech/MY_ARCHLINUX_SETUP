@@ -119,7 +119,7 @@ elif [ "$nvme_count" -eq 1 ]; then
 	    --pbkdf=argon2id \
 	    --iter-time=4000 \
 	    --verify-passphrase \
-	    --label=cryptroot \
+	    --label=encrypted_root \
 	    --pbkdf-memory=2097152 \
 	    --pbkdf-parallel=4 \
 	    "${disk1}p2"
@@ -231,7 +231,7 @@ if [ "$nvme_count" -eq 2 ]; then
 	    --key-size=512 \
 	    --pbkdf=argon2id \
 	    --iter-time=4000 \
-	    --label=cryptsecondssd \
+	    --label=encrypted_secondssd \
 	    --pbkdf-memory=2097152 \
 	    --pbkdf-parallel=4 \
 		--key-file=/mnt/etc/cryptsetup-keys.d/secondssd-keyfile.key  \
