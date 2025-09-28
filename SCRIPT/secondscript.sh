@@ -237,7 +237,7 @@ sudo systemctl enable gdm.service
 yay -S msi-ec-dkms-git --noconfirm
 yayerror=$((yayerror + $?))
 
-sudo mkinitcpio-editor -a msi-ec
+echo "msi-ec" | sudo tee /etc/modules-load.d/msi-ec.conf
 
 #Gnome-randr
 yay -S gnome-randr-rust --noconfirm
