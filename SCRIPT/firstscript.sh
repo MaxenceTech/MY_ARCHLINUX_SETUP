@@ -29,6 +29,8 @@ echo "Updating system packages..."
 pacman -Syu --noconfirm
 pacmanerror=$((pacmanerror + $?))
 
+mkdir /etc/pacman.d/hooks
+
 # Install essential system packages
 echo "Installing base development and networking packages..."
 pacman -S sbctl nano base-devel openssh networkmanager wpa_supplicant wireless_tools \
