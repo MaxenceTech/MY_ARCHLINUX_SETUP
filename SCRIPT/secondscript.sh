@@ -51,6 +51,21 @@ else
 	exit 1
 fi
 
+echo "[Trigger]
+Type = Package
+Operation = Upgrade
+Target = systemd
+
+[Action]
+Description = Gracefully upgrading systemd-boot...
+When = PostTransaction
+Exec = /usr/bin/systemctl restart systemd-boot-update.service" | sudo tee /etc/pacman.d/hooks/95-systemd-boot.hook
+
+sbctlvar=$(grep -v  -n "^#" /usr/share/libalpm/hooks/zz-sbctl.hook | grep 'Target' | tail -1)
+ligne="${sbctlvar%:*}"
+sudo sed -i "$((ligne)) a Target = usr/lib/systemd/boot/efi/systemd-boot*.efi" /usr/share/libalpm/hooks/zz-sbctl.hook
+
+
 #==============================================================================
 # SYSTEM TIME AND HOSTNAME CONFIGURATION
 #==============================================================================
