@@ -250,7 +250,7 @@ if [ "$nvme_count" -eq 2 ]; then
     mkfs.ext4 /dev/mapper/data
 	mount --mkdir /dev/mapper/data /mnt/data
 
-	echo "cryptsecondssd UUID=$DATAPARTUUIDGREP  /etc/cryptsetup-keys.d/secondssd-keyfile.key luks,discard" | tee -a /mnt/etc/crypttab
+	echo "SECOND_SSD UUID=$DATAPARTUUIDGREP /etc/cryptsetup-keys.d/secondssd-keyfile.key" | tee -a /mnt/etc/crypttab
 fi
 # Generate filesystem table
 genfstab -U /mnt | tee -a  /mnt/etc/fstab
