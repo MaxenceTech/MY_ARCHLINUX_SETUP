@@ -9,6 +9,11 @@ Ce dépôt contient des scripts automatisés pour gérer l'installation d'Arch L
 Puis après le redémarrage, 
 ```
 cd /archinstall/SCRIPT
+./secure-boot.sh
+```
+Puis après le redémarrage, 
+```
+cd /archinstall/SCRIPT
 ./secondscript.sh
 ```
 
