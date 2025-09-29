@@ -55,7 +55,7 @@ if [ $(sudo sbctl status | grep "Setup Mode" | grep -c "Disabled") -gt 0 ] && [ 
 	# Trim trailing
 	luks_dev="${luks_dev%"${luks_dev##*[![:space:]]}"}"
 	sudo systemd-cryptenroll $luks_dev --recovery-key
-	sudo systemd-cryptenroll $luks_dev --wipe-slot=empty --tpm2-device=auto --tpm2-pcrs=7+15:sha256=0000000000000000000000000000000000000000000000000000000000000000
+	sudo systemd-cryptenroll $luks_dev --wipe-slot=empty --tpm2-device=auto --tpm2-pcrs=7+15:sha256=0000000000000000000000000000000000000000000000000000000000000000 --tpm2-with-pin=yes
 else
 	echo "Secure boot disabled or Setup Mode still activated ! Aborting ..."
 	exit 1
