@@ -129,6 +129,7 @@ elif [ "$nvme_count" -eq 1 ]; then
 	    --pbkdf-parallel=4 \
 	    "${disk1}p2"
     echo $rpassword | cryptsetup open "${disk1}p2" root
+	unset rpassword
  
     # Create filesystems
     mkfs.fat -F32 "${disk1}p1"
@@ -192,6 +193,7 @@ elif [ "$nvme_count" -eq 2 ]; then
 	    --pbkdf-parallel=4 \
 	    "${disk1}p2"
     echo $rpassword | cryptsetup open "${disk1}p2" root
+	unset rpassword
 	
     mkfs.fat -F32 "${disk1}p1"
     mkfs.ext4 /dev/mapper/root
@@ -258,6 +260,7 @@ if [ "$nvme_count" -eq 2 ]; then
  		 --pbkdf-memory=2097152 \
   		--pbkdf-parallel=4 \
 		"${disk2}p1"  --key-file=/mnt/etc/cryptsetup-keys.d/secondssd-keyfile.key
+	unset dpassword
 
 	data_luks_dev=$(LC_ALL=C cryptsetup status SECOND_SSD | awk -F': ' '/device:/ {print $2}')
 	# Trim leading
