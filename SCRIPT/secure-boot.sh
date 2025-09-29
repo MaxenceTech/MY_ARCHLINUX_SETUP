@@ -21,9 +21,15 @@ Description = Gracefully upgrading systemd-boot...
 When = PostTransaction
 Exec = /usr/bin/systemctl restart systemd-boot-update.service" | sudo tee /etc/pacman.d/hooks/95-systemd-boot.hook
 
-sbctlvar=$(sudo grep -v  -n "^#" /usr/share/libalpm/hooks/zz-sbctl.hook | grep 'Target' | tail -1)
-ligne="${sbctlvar%:*}"
-sudo sed -i "$((ligne)) a Target = usr/lib/systemd/boot/efi/systemd-boot*.efi" /usr/share/libalpm/hooks/zz-sbctl.hook
+echo "[Trigger]
+Type = Path
+Operation = Install
+Operation = Upgrade
+Target = usr/lib/systemd/boot/efi/systemd-boot*.efi
 
+[Action]
+Description = Signing EFI binaries...
+When = PostTransaction
+Exec = /usr/bin/sbctl sign-all -g" | sudo tee /etc/pacman.d/hooks/96-secureboot.hook
 
 sudo reboot
