@@ -119,7 +119,7 @@ elif [ "$nvme_count" -eq 1 ]; then
 	    --pbkdf=argon2id \
 	    --iter-time=4000 \
 	    --verify-passphrase \
-	    --label=cryptroot \
+	    --label=encrypted_root \
 	    --pbkdf-memory=2097152 \
 	    --pbkdf-parallel=4 \
 	    "${disk1}p2"
@@ -167,7 +167,6 @@ elif [ "$nvme_count" -eq 2 ]; then
 
     # Clear partition tables
     sgdisk -Z "$disk1"
-    sgdisk -Z "$disk2"
 
     # Partition primary disk: EFI + Root
     sgdisk --set-alignment=2048 --align-end -n 1:0:+2G -t 1:ef00 "$disk1"       # EFI partition
@@ -179,7 +178,7 @@ elif [ "$nvme_count" -eq 2 ]; then
 	    --pbkdf=argon2id \
 	    --iter-time=4000 \
 	    --verify-passphrase \
-	    --label=cryptroot \
+	    --label=encrypted_root \
 	    --pbkdf-memory=2097152 \
 	    --pbkdf-parallel=4 \
 	    "${disk1}p2"
@@ -188,15 +187,9 @@ elif [ "$nvme_count" -eq 2 ]; then
     mkfs.fat -F32 "${disk1}p1"
     mkfs.ext4 /dev/mapper/root
 
-    # Partition secondary disk: Swap + Data
-    sgdisk --set-alignment=2048 --align-end -n 1:0:0 -t 1:8300 "$disk2"        # Data partition
-
-    mkfs.ext4 "${disk2}p1"
-
     # Mount all filesystems
     mount /dev/mapper/root /mnt
     mount --mkdir -t vfat -o fmask=0077,dmask=0077 "${disk1}p1" /mnt/efi
-    mount --mkdir "${disk2}p1" /mnt/data
 	mkswap -U clear --label swapfile --size 16G --file /mnt/swapfile
     swapon /mnt/swapfile
 
@@ -226,7 +219,39 @@ read -r -p "Press any key to continue..."
 #==============================================================================
 # SYSTEM CONFIGURATION PREPARATION
 #==============================================================================
+if [ "$nvme_count" -eq 2 ]; then
+    sgdisk -Z "$disk2"
+	dd bs=512 count=4 if=/dev/random iflag=fullblock | install -m 0600 /dev/stdin /mnt/etc/cryptsetup-keys.d/secondssd-keyfile.key
+	# Partition secondary disk: Swap + Data
+    sgdisk --set-alignment=2048 --align-end -n 1:0:0 -t 1:8300 "$disk2"        # Data partition
 
+	cryptsetup luksFormat -q \
+	    --type=luks2 \
+	    --cipher=aes-xts-plain64 \
+	    --key-size=512 \
+	    --pbkdf=argon2id \
+	    --iter-time=4000 \
+	    --label=encrypted_secondssd \
+	    --pbkdf-memory=2097152 \
+	    --pbkdf-parallel=4 \
+		--key-file=/mnt/etc/cryptsetup-keys.d/secondssd-keyfile.key  \
+		--keyfile-size=2048 \
+	    "${disk2}p1"
+    cryptsetup open "${disk2}p1" SECOND_SSD --key-file=/mnt/etc/cryptsetup-keys.d/secondssd-keyfile.key
+
+	data_luks_dev=$(LC_ALL=C cryptsetup status SECOND_SSD | awk -F': ' '/device:/ {print $2}')
+	# Trim leading
+	data_luks_dev="${data_luks_dev#"${data_luks_dev%%[![:space:]]*}"}"
+	# Trim trailing
+	data_luks_dev="${data_luks_dev%"${data_luks_dev##*[![:space:]]}"}"
+
+	DATAPARTUUIDGREP=$(cryptsetup luksUUID -- "$data_luks_dev")
+	
+    mkfs.ext4 /dev/mapper/SECOND_SSD
+	mount --mkdir /dev/mapper/SECOND_SSD /mnt/data
+
+	echo "SECOND_SSD UUID=$DATAPARTUUIDGREP /etc/cryptsetup-keys.d/secondssd-keyfile.key" | tee -a /mnt/etc/crypttab
+fi
 # Generate filesystem table
 genfstab -U /mnt | tee -a  /mnt/etc/fstab
 
