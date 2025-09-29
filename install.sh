@@ -13,7 +13,7 @@
 # Exit on any error, undefined variables, and pipe failures
 set -euo pipefail
 
-pacman -Sy qrencode
+pacman -Sy qrencode --noconfirm
 
 # Set French keyboard layout
 loadkeys fr-pc
