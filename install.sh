@@ -237,9 +237,9 @@ if [ "$nvme_count" -eq 2 ]; then
 		--key-file=/mnt/etc/cryptsetup-keys.d/secondssd-keyfile.key  \
 		--keyfile-size=2048 \
 	    "${disk2}p1"
-    cryptsetup open "${disk2}p1" data --key-file=/mnt/etc/cryptsetup-keys.d/secondssd-keyfile.key
+    cryptsetup open "${disk2}p1" SECOND_SSD --key-file=/mnt/etc/cryptsetup-keys.d/secondssd-keyfile.key
 
-	data_luks_dev=$(LC_ALL=C cryptsetup status data | awk -F': ' '/device:/ {print $2}')
+	data_luks_dev=$(LC_ALL=C cryptsetup status SECOND_SSD | awk -F': ' '/device:/ {print $2}')
 	# Trim leading
 	data_luks_dev="${data_luks_dev#"${data_luks_dev%%[![:space:]]*}"}"
 	# Trim trailing
@@ -247,8 +247,8 @@ if [ "$nvme_count" -eq 2 ]; then
 
 	DATAPARTUUIDGREP=$(cryptsetup luksUUID -- "$data_luks_dev")
 	
-    mkfs.ext4 /dev/mapper/data
-	mount --mkdir /dev/mapper/data /mnt/data
+    mkfs.ext4 /dev/mapper/SECOND_SSD
+	mount --mkdir /dev/mapper/SECOND_SSD /mnt/data
 
 	echo "SECOND_SSD UUID=$DATAPARTUUIDGREP /etc/cryptsetup-keys.d/secondssd-keyfile.key" | tee -a /mnt/etc/crypttab
 fi
