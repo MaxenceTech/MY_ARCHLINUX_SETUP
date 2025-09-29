@@ -43,6 +43,25 @@ done
 set -euo pipefail
 
 #==============================================================================
+# Enrolling the TPM
+#==============================================================================
+
+echo "Enrolling the TPM"
+
+if [ $(sudo sbctl status | grep "Setup Mode" | grep -c "Disabled") -gt 0 ] && [ $(sudo sbctl status | grep "Secure Boot" | grep -c "Enabled") -gt 0 ]; then
+	luks_dev=$(LC_ALL=C cryptsetup status root | awk -F': ' '/device:/ {print $2}')
+	# Trim leading
+	luks_dev="${luks_dev#"${luks_dev%%[![:space:]]*}"}"
+	# Trim trailing
+	luks_dev="${luks_dev%"${luks_dev##*[![:space:]]}"}"
+	systemd-cryptenroll $luks_dev --recovery-key
+	systemd-cryptenroll $luks_dev --wipe-slot=empty --tpm2-device=auto --tpm2-pcrs=7+15:sha256=0000000000000000000000000000000000000000000000000000000000000000
+else
+	echo "Secure boot disabled or Setup Mode still activated ! Aborting ..."
+	exit 1
+fi
+
+#==============================================================================
 # SYSTEM TIME AND HOSTNAME CONFIGURATION
 #==============================================================================
 
@@ -70,15 +89,6 @@ done
 echo "127.0.0.1 localhost
 ::1 localhost
 127.0.1.1 $hostnamevar" | sudo tee -a /etc/hosts
-
-#==============================================================================
-# Enrolling the TPM
-#==============================================================================
-
-echo "Enrolling the TPM"
-
-systemd-cryptenroll /dev/sda2 --recovery-key
-systemd-cryptenroll /dev/sda2 --wipe-slot=empty --tpm2-device=auto --tpm2-pcrs=7+15:sha256=0000000000000000000000000000000000000000000000000000000000000000
 
 #==============================================================================
 # PACKAGE INSTALLATION TRACKING
