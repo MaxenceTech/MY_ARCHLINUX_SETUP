@@ -39,27 +39,32 @@ do
     fi
 done
 
-# Exit on any error, undefined variables, and pipe failures
-set -euo pipefail
-
 #==============================================================================
 # Enrolling the TPM
 #==============================================================================
 
 echo "Enrolling the TPM"
+enrolledtpm=0
 
-if [ $(sudo sbctl status | grep "Setup Mode" | grep -c "Disabled") -gt 0 ] && [ $(sudo sbctl status | grep "Secure Boot" | grep -c "Enabled") -gt 0 ]; then
+while [ $(sudo sbctl status | grep "Setup Mode" | grep -c "Disabled") -gt 0 ] && [ $(sudo sbctl status | grep "Secure Boot" | grep -c "Enabled") -gt 0 ]; do
 	luks_dev=$(LC_ALL=C sudo cryptsetup status root | awk -F': ' '/device:/ {print $2}')
 	# Trim leading
 	luks_dev="${luks_dev#"${luks_dev%%[![:space:]]*}"}"
 	# Trim trailing
 	luks_dev="${luks_dev%"${luks_dev##*[![:space:]]}"}"
-	sudo systemd-cryptenroll $luks_dev --recovery-key
-	sudo systemd-cryptenroll $luks_dev --wipe-slot=empty --tpm2-device=auto --tpm2-pcrs=7+15:sha256=0000000000000000000000000000000000000000000000000000000000000000
-else
+	sudo systemd-cryptenroll $luks_dev --wipe-slot=tpm2 --tpm2-device=auto --tpm2-pcrs=7+15:sha256=0000000000000000000000000000000000000000000000000000000000000000 --tpm2-with-pin=yes
+	if [ $? == 0 ]; then
+		enrolledtpm=1
+        break
+    fi
+done
+if [ $enrolledtpm != 1 ]; then
 	echo "Secure boot disabled or Setup Mode still activated ! Aborting ..."
 	exit 1
 fi
+
+# Exit on any error, undefined variables, and pipe failures
+set -euo pipefail
 
 #==============================================================================
 # SYSTEM TIME AND HOSTNAME CONFIGURATION

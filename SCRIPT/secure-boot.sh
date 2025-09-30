@@ -11,25 +11,31 @@ else
 	exit 1
 fi
 
-echo "[Trigger]
+echo '[Trigger]
 Type = Package
+Operation = Install
 Operation = Upgrade
 Target = systemd
 
 [Action]
 Description = Gracefully upgrading systemd-boot...
 When = PostTransaction
-Exec = /usr/bin/systemctl restart systemd-boot-update.service" | sudo tee /etc/pacman.d/hooks/95-systemd-boot.hook
+Exec = /usr/bin/systemctl restart systemd-boot-update.service' | sudo tee /etc/pacman.d/hooks/95-systemd-boot.hook
 
-echo "[Trigger]
+
+sudo tee /etc/pacman.d/hooks/80-secureboot.hook << 'EOF'
+[Trigger]
 Type = Path
 Operation = Install
 Operation = Upgrade
 Target = usr/lib/systemd/boot/efi/systemd-boot*.efi
 
 [Action]
-Description = Signing EFI binaries...
+Description = Signing systemd-boot EFI binary for Secure Boot
 When = PostTransaction
-Exec = /usr/bin/sbctl sign-all -g" | sudo tee /etc/pacman.d/hooks/96-secureboot.hook
+Exec = /bin/sh -c 'while read -r f; do sbctl sign -s "$f"; done;'
+Depends = sh
+NeedsTargets
+EOF
 
 sudo reboot
