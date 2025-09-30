@@ -118,7 +118,7 @@ elif [ "$nvme_count" -eq 1 ]; then
 	printf %s "$rpassword" | qrencode -t ANSIUTF8
 	read -r -p "Save the Luks password. Press any key to continue..."
 
-     | cryptsetup luksFormat -q \
+    printf %s "$rpassword" | cryptsetup luksFormat -q \
 	    --type=luks2 \
 	    --cipher=aes-xts-plain64 \
 	    --key-size=512 \
@@ -128,7 +128,7 @@ elif [ "$nvme_count" -eq 1 ]; then
 	    --pbkdf-memory=2097152 \
 	    --pbkdf-parallel=4 \
 	    "${disk1}p2"
-    echo $rpassword | cryptsetup open "${disk1}p2" root
+    printf %s "$rpassword" | cryptsetup open "${disk1}p2" root
 	unset rpassword
  
     # Create filesystems
