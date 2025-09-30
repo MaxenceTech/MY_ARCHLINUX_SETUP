@@ -44,7 +44,7 @@ done
 #==============================================================================
 
 echo "Enrolling the TPM"
-enrolledtpm=1
+enrolledtpm=0
 
 while [ $(sudo sbctl status | grep "Setup Mode" | grep -c "Disabled") -gt 0 ] && [ $(sudo sbctl status | grep "Secure Boot" | grep -c "Enabled") -gt 0 ]; do
 	luks_dev=$(LC_ALL=C sudo cryptsetup status root | awk -F': ' '/device:/ {print $2}')
