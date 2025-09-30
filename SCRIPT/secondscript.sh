@@ -52,7 +52,7 @@ while [ $(sudo sbctl status | grep "Setup Mode" | grep -c "Disabled") -gt 0 ] &&
 	luks_dev="${luks_dev#"${luks_dev%%[![:space:]]*}"}"
 	# Trim trailing
 	luks_dev="${luks_dev%"${luks_dev##*[![:space:]]}"}"
-	sudo systemd-cryptenroll $luks_dev --wipe-slot=tpm2 --tpm2-device=auto --tpm2-pcrs=7+15:sha256=0000000000000000000000000000000000000000000000000000000000000000 --tpm2-with-pin=yes
+	sudo systemd-cryptenroll $luks_dev --wipe-slot=tpm2 --tpm2-device=auto --tpm2-pcrs=2+4+7+15:sha256=0000000000000000000000000000000000000000000000000000000000000000 --tpm2-with-pin=yes
 	if [ $? == 0 ]; then
 		enrolledtpm=1
         break
