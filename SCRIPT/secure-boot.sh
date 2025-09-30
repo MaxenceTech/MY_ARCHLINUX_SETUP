@@ -13,6 +13,7 @@ fi
 
 echo '[Trigger]
 Type = Package
+Operation = Install
 Operation = Upgrade
 Target = systemd
 
