@@ -5,7 +5,7 @@ set -euo pipefail
 if [ $(sudo sbctl status | grep "Setup Mode" | grep -c "Enabled") -gt 0 ]; then
 	sudo sbctl create-keys
 	sudo sbctl enroll-keys -m -f
-	sudo sbctl verify | sed -E 's|^.* (/.+) is not signed$|sudo sbctl sign -s "\1"|e'
+	sudo sbctl sign-all -g
 else
 	echo "Not in setup mode ! Exiting !"
 	exit 1
