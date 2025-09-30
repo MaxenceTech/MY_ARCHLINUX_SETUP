@@ -13,8 +13,6 @@
 # Exit on any error, undefined variables, and pipe failures
 set -euo pipefail
 
-pacman -Sy qrencode --noconfirm
-
 # Set French keyboard layout
 loadkeys fr-pc
 
@@ -94,6 +92,8 @@ sleep 20
 #==============================================================================
 # DISK PARTITIONING AND FILESYSTEM SETUP
 #==============================================================================
+
+pacman -Sy qrencode --noconfirm
 
 lsblk -d -o NAME,MODEL,SIZE,TYPE | grep nvme
 
