@@ -115,10 +115,10 @@ elif [ "$nvme_count" -eq 1 ]; then
     sgdisk --set-alignment=2048 --align-end -n 2:0:0 -t 2:8304 "$disk1"      # Root partition
 
 	rpassword=$(tr -dc 'A-Za-z0-9' </dev/urandom | head -c 90 | sed 's/.\{6\}/&-/g; s/-$//' || true)
-	qrencode -t ANSIUTF8 $rpassword
+	printf %s "$rpassword" | qrencode -t ANSIUTF8
 	read -r -p "Save the Luks password. Press any key to continue..."
 
-    echo $rpassword | cryptsetup luksFormat -q \
+     | cryptsetup luksFormat -q \
 	    --type=luks2 \
 	    --cipher=aes-xts-plain64 \
 	    --key-size=512 \
@@ -179,10 +179,10 @@ elif [ "$nvme_count" -eq 2 ]; then
     sgdisk --set-alignment=2048 --align-end -n 2:0:0 -t 2:8304 "$disk1"        # Root partition
 
 	rpassword=$(tr -dc 'A-Za-z0-9' </dev/urandom | head -c 90 | sed 's/.\{6\}/&-/g; s/-$//' || true)
-	qrencode -t ANSIUTF8 $rpassword
+	printf %s "$rpassword" | qrencode -t ANSIUTF8
 	read -r -p "Save the Root Luks password. Press any key to continue..."
 	
-    echo $rpassword | cryptsetup luksFormat -q \
+    printf %s "$rpassword" | cryptsetup luksFormat -q \
 	    --type=luks2 \
 	    --cipher=aes-xts-plain64 \
 	    --key-size=512 \
@@ -192,7 +192,7 @@ elif [ "$nvme_count" -eq 2 ]; then
 	    --pbkdf-memory=2097152 \
 	    --pbkdf-parallel=4 \
 	    "${disk1}p2"
-    echo $rpassword | cryptsetup open "${disk1}p2" root
+    printf %s "$rpassword" | cryptsetup open "${disk1}p2" root
 	unset rpassword
 	
     mkfs.fat -F32 "${disk1}p1"
