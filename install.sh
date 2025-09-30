@@ -250,18 +250,6 @@ if [ "$nvme_count" -eq 2 ]; then
 	    "${disk2}p1"
     cryptsetup open "${disk2}p1" SECOND_SSD --key-file=/mnt/etc/cryptsetup-keys.d/secondssd-keyfile.key
 
-	dpassword=$(tr -dc 'A-Za-z0-9' </dev/urandom | head -c 90 | sed 's/.\{6\}/&-/g; s/-$//' || true)
-	qrencode -t ANSIUTF8 $dpassword
-	read -r -p "Save the Data Luks password. Press any key to continue..."
-
-	echo $dpassword | cryptsetup luksAddKey -q \
-  		--pbkdf=argon2id \
-  		--iter-time=4000 \
- 		 --pbkdf-memory=2097152 \
-  		--pbkdf-parallel=4 \
-		"${disk2}p1"  --key-file=/mnt/etc/cryptsetup-keys.d/secondssd-keyfile.key
-	unset dpassword
-
 	data_luks_dev=$(LC_ALL=C cryptsetup status SECOND_SSD | awk -F': ' '/device:/ {print $2}')
 	# Trim leading
 	data_luks_dev="${data_luks_dev#"${data_luks_dev%%[![:space:]]*}"}"
