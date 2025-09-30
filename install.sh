@@ -116,7 +116,7 @@ elif [ "$nvme_count" -eq 1 ]; then
 
 	rpassword=$(tr -dc 'A-Za-z0-9' </dev/urandom | head -c 90 | sed 's/.\{6\}/&-/g; s/-$//' || true)
 	printf %s "$rpassword" | qrencode -t ANSIUTF8
-	read -r -p "Save the Luks password. Press any key to continue..."
+	read -r -p "Save the root Luks password. Press any key to continue..."
 
     printf %s "$rpassword" | cryptsetup luksFormat -q \
 	    --type=luks2 \
