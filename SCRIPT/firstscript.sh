@@ -169,28 +169,18 @@ echo "rd.luks.options=discard,tpm2-measure-pcr=yes rd.luks.name=$PARTUUIDGREP=ro
 echo 'ALL_config="/etc/mkinitcpio.conf"
 ALL_kver="/boot/vmlinuz-linux"
 
-PRESETS=('nvidia' 'nvidia_fallback' 'gpupasstrough' 'gpupasstrough_fallback')
+PRESETS=('nvidia' 'gpupasstrough')
 
 #default_config="/etc/mkinitcpio.conf"
 #default_image="/boot/initramfs-linux.img"
 nvidia_uki="/efi/EFI/Linux/nvidia-linux.efi"
 nvidia_options="--cmdline /etc/kernel/arch_cmdline"
 
-#fallback_config="/etc/mkinitcpio.conf"
-#fallback_image="/boot/initramfs-linux-fallback.img"
-nvidia_fallback_uki="/efi/EFI/Linux/nvidia_fallback-linux.efi"
-nvidia_fallback_options="--cmdline /etc/kernel/arch_cmdline"
-
 
 #default_config="/etc/mkinitcpio.conf"
 #default_image="/boot/initramfs-linux.img"
 gpupasstrough_uki="/efi/EFI/Linux/gpupasstrough-linux.efi"
-gpupasstrough_options="--cmdline /etc/kernel/arch_gpupasstrough_cmdline"
-
-#fallback_config="/etc/mkinitcpio.conf"
-#fallback_image="/boot/initramfs-linux-fallback.img"
-gpupasstrough_fallback_uki="/efi/EFI/Linux/gpupasstrough_fallback-linux.efi"
-gpupasstrough_fallback_options="--cmdline /etc/kernel/arch_gpupasstrough_cmdline"' | tee /etc/mkinitcpio.d/linux.preset
+gpupasstrough_options="--cmdline /etc/kernel/arch_gpupasstrough_cmdline"' | tee /etc/mkinitcpio.d/linux.preset
 
 rm /boot/initramfs-linux.img
 rm /boot/initramfs-linux-fallback.img
