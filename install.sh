@@ -115,7 +115,7 @@ elif [ "$nvme_count" -eq 1 ]; then
     sgdisk --set-alignment=2048 --align-end -n 2:0:0 -t 2:8304 "$disk1"      # Root partition
 
 	SAFECHAR='ABCDEFGHJKMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789'
-	rpassword=$(tr -dc $SAFECHAR </dev/urandom | head -c 60 | sed 's/.\{6\}/&-/g; s/-$//' || true)
+	rpassword=$(tr -dc $SAFECHAR </dev/urandom | head -c 48 | sed 's/.\{6\}/&-/g; s/-$//' || true)
 	printf %s "$rpassword" | qrencode -t ANSIUTF8
 	read -r -p "Save the root Luks password. Press any key to continue..."
 
@@ -180,7 +180,7 @@ elif [ "$nvme_count" -eq 2 ]; then
     sgdisk --set-alignment=2048 --align-end -n 2:0:0 -t 2:8304 "$disk1"        # Root partition
 
 	SAFECHAR='ABCDEFGHJKMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789'
-	rpassword=$(tr -dc $SAFECHAR </dev/urandom | head -c 60 | sed 's/.\{6\}/&-/g; s/-$//' || true)
+	rpassword=$(tr -dc $SAFECHAR </dev/urandom | head -c 48 | sed 's/.\{6\}/&-/g; s/-$//' || true)
 	printf %s "$rpassword" | qrencode -t ANSIUTF8
 	read -r -p "Save the Root Luks password. Press any key to continue..."
 	
