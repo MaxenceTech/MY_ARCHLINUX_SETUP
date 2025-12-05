@@ -182,8 +182,7 @@ nvidia_options="--cmdline /etc/kernel/arch_cmdline"
 gpupasstrough_uki="/efi/EFI/Linux/gpupasstrough-linux.efi"
 gpupasstrough_options="--cmdline /etc/kernel/arch_gpupasstrough_cmdline"' | tee /etc/mkinitcpio.d/linux.preset
 
-rm /boot/initramfs-linux.img
-rm /boot/initramfs-linux-fallback.img
+rm /boot/initramfs-*.img
 
 # Install and configure systemd-boot
 bootctl install
