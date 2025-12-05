@@ -29,9 +29,11 @@ echo "Updating system packages..."
 pacman -Syu --noconfirm
 pacmanerror=$((pacmanerror + $?))
 
+mkdir /etc/pacman.d/hooks
+
 # Install essential system packages
 echo "Installing base development and networking packages..."
-pacman -S nano base-devel openssh networkmanager wpa_supplicant wireless_tools \
+pacman -S sbctl nano base-devel openssh networkmanager wpa_supplicant wireless_tools \
     netctl dialog iputils man git --noconfirm
 pacmanerror=$((pacmanerror + $?))
 
@@ -124,7 +126,7 @@ echo "Updating mkinitcpio configuration..."
 hooksvar=$(grep -v  -n "^#" /etc/mkinitcpio.conf | grep 'HOOKS=')
 ligne="${hooksvar%:*}"
 sed -i "$((ligne)) d" /etc/mkinitcpio.conf
-sed -i "$((ligne-1)) a HOOKS=(systemd autodetect modconf block keyboard sd-vconsole filesystems fsck acpi_override)" /etc/mkinitcpio.conf
+sed -i "$((ligne-1)) a HOOKS=(systemd autodetect microcode modconf keyboard sd-vconsole block sd-encrypt filesystems fsck acpi_override)" /etc/mkinitcpio.conf
 
 #==============================================================================
 # SYSTEM PERFORMANCE TWEAKS
@@ -151,45 +153,52 @@ pacman -S efibootmgr intel-ucode --noconfirm
 pacmanerror=$((pacmanerror + $?))
 
 # Get root partition UUID for bootloader configuration
-PARTUUIDGREP=$(awk '$2 == "/" {print $1}' /etc/fstab)
+luks_dev=$(LC_ALL=C cryptsetup status root | awk -F': ' '/device:/ {print $2}')
+# Trim leading
+luks_dev="${luks_dev#"${luks_dev%%[![:space:]]*}"}"
+# Trim trailing
+luks_dev="${luks_dev%"${luks_dev##*[![:space:]]}"}"
+
+PARTUUIDGREP=$(cryptsetup luksUUID -- "$luks_dev")
+
+# Create boot entries for different configurations
+
+echo "rd.luks.options=discard,tpm2-measure-pcr=yes rd.luks.name=$PARTUUIDGREP=root root=/dev/mapper/root rw quiet mitigations=auto,nosmt nowatchdog tsc=reliable clocksource=tsc intel_iommu=on iommu=pt vt.global_cursor_default=0 zswap.enabled=1 zswap.shrinker_enabled=1 zswap.compressor=lz4 zswap.max_pool_percent=20 zswap.zpool=zsmalloc modprobe.blacklist=kvmfr video=HDMI-A-1:d video=DP-1:d video=DP-2:d" | tee /etc/kernel/arch_cmdline
+echo "rd.luks.options=discard,tpm2-measure-pcr=yes rd.luks.name=$PARTUUIDGREP=root root=/dev/mapper/root rw quiet mitigations=auto,nosmt nowatchdog tsc=reliable clocksource=tsc intel_iommu=on iommu=pt vfio-pci.ids=10de:27a0,10de:22bc vt.global_cursor_default=0 zswap.enabled=1 zswap.shrinker_enabled=1 zswap.compressor=lz4 zswap.max_pool_percent=20 zswap.zpool=zsmalloc" | tee /etc/kernel/arch_gpupasstrough_cmdline
+
+echo 'ALL_config="/etc/mkinitcpio.conf"
+ALL_kver="/boot/vmlinuz-linux"
+
+PRESETS=('nvidia' 'gpupasstrough')
+
+#default_config="/etc/mkinitcpio.conf"
+#default_image="/boot/initramfs-linux.img"
+nvidia_uki="/efi/EFI/Linux/nvidia-linux.efi"
+nvidia_options="--cmdline /etc/kernel/arch_cmdline"
+
+
+#default_config="/etc/mkinitcpio.conf"
+#default_image="/boot/initramfs-linux.img"
+gpupasstrough_uki="/efi/EFI/Linux/gpupasstrough-linux.efi"
+gpupasstrough_options="--cmdline /etc/kernel/arch_gpupasstrough_cmdline"' | tee /etc/mkinitcpio.d/linux.preset
+
+rm /boot/initramfs-*.img
 
 # Install and configure systemd-boot
 bootctl install
 
+read -r -p "Bootloader installed. Press any key to continue..."
+
 # Create bootloader configuration
-echo "default  arch.conf
+echo "default  @saved
 timeout  6
 console-mode max
-editor   no" | tee /boot/loader/loader.conf
+editor   no" | tee /efi/loader/loader.conf
 
-# Create boot entries for different configurations
-echo "title   Arch Linux NVIDIA
-linux   /vmlinuz-linux
-initrd  /intel-ucode.img
-initrd  /initramfs-linux.img
-options root=$PARTUUIDGREP rw quiet mitigations=auto,nosmt nowatchdog tsc=reliable clocksource=tsc intel_iommu=on iommu=pt vt.global_cursor_default=0 zswap.enabled=1 zswap.shrinker_enabled=1 zswap.compressor=lz4 zswap.max_pool_percent=12 zswap.zpool=zsmalloc modprobe.blacklist=kvmfr video=HDMI-A-1:d video=DP-1:d video=DP-2:d" | tee /boot/loader/entries/arch.conf
-
-echo "title   Arch Linux GPU PASSTROUGH
-linux   /vmlinuz-linux
-initrd  /intel-ucode.img
-initrd  /initramfs-linux.img
-options root=$PARTUUIDGREP rw quiet mitigations=auto,nosmt nowatchdog tsc=reliable clocksource=tsc intel_iommu=on iommu=pt vfio-pci.ids=10de:27a0,10de:22bc vt.global_cursor_default=0 zswap.enabled=1 zswap.shrinker_enabled=1 zswap.compressor=lz4 zswap.max_pool_percent=12 zswap.zpool=zsmalloc" | tee /boot/loader/entries/arch-gpupasstrough.conf
-
-echo "title   Fallback Arch Linux NVIDIA
-linux   /vmlinuz-linux
-initrd  /intel-ucode.img
-initrd  /initramfs-linux-fallback.img
-options root=$PARTUUIDGREP rw quiet mitigations=auto,nosmt nowatchdog tsc=reliable clocksource=tsc intel_iommu=on iommu=pt vt.global_cursor_default=0 zswap.enabled=1 zswap.shrinker_enabled=1 zswap.compressor=lz4 zswap.max_pool_percent=12 zswap.zpool=zsmalloc modprobe.blacklist=kvmfr video=HDMI-A-1:d video=DP-1:d video=DP-2:d" | tee /boot/loader/entries/fallback-arch.conf
-
-echo "title   Fallback Arch Linux GPU PASSTROUGH
-linux   /vmlinuz-linux
-initrd  /intel-ucode.img
-initrd  /initramfs-linux-fallback.img
-options root=$PARTUUIDGREP rw quiet mitigations=auto,nosmt nowatchdog tsc=reliable clocksource=tsc intel_iommu=on iommu=pt vfio-pci.ids=10de:27a0,10de:22bc vt.global_cursor_default=0 zswap.enabled=1 zswap.shrinker_enabled=1 zswap.compressor=lz4 zswap.max_pool_percent=12 zswap.zpool=zsmalloc" | tee /boot/loader/entries/fallback-arch-gpupasstrough.conf
+mkinitcpio -p linux
 
 # Update bootloader and enable automatic updates
 bootctl update || [[ $? -eq 1 ]]
-systemctl enable systemd-boot-update.service
 
 #==============================================================================
 # INSTALLATION SUMMARY
