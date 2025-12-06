@@ -163,8 +163,8 @@ PARTUUIDGREP=$(cryptsetup luksUUID -- "$luks_dev")
 
 # Create boot entries for different configurations
 
-echo "rd.luks.options=discard,tpm2-measure-pcr=yes rd.luks.name=$PARTUUIDGREP=root root=/dev/mapper/root rw quiet mitigations=auto,nosmt nowatchdog tsc=reliable clocksource=tsc intel_iommu=on iommu=pt vt.global_cursor_default=0 zswap.enabled=1 zswap.shrinker_enabled=1 zswap.compressor=lz4 zswap.max_pool_percent=20 zswap.zpool=zsmalloc modprobe.blacklist=kvmfr video=HDMI-A-1:d video=DP-1:d video=DP-2:d" | tee /etc/kernel/arch_cmdline
-echo "rd.luks.options=discard,tpm2-measure-pcr=yes rd.luks.name=$PARTUUIDGREP=root root=/dev/mapper/root rw quiet mitigations=auto,nosmt nowatchdog tsc=reliable clocksource=tsc intel_iommu=on iommu=pt vfio-pci.ids=10de:27a0,10de:22bc vt.global_cursor_default=0 zswap.enabled=1 zswap.shrinker_enabled=1 zswap.compressor=lz4 zswap.max_pool_percent=20 zswap.zpool=zsmalloc" | tee /etc/kernel/arch_gpupasstrough_cmdline
+echo "rd.luks.options=discard rd.luks.name=$PARTUUIDGREP=root root=/dev/mapper/root rw quiet mitigations=auto,nosmt nowatchdog tsc=reliable clocksource=tsc intel_iommu=on iommu=pt vt.global_cursor_default=0 zswap.enabled=1 zswap.shrinker_enabled=1 zswap.compressor=lz4 zswap.max_pool_percent=20 zswap.zpool=zsmalloc modprobe.blacklist=kvmfr video=HDMI-A-1:d video=DP-1:d video=DP-2:d" | tee /etc/kernel/arch_cmdline
+echo "rd.luks.options=discard rd.luks.name=$PARTUUIDGREP=root root=/dev/mapper/root rw quiet mitigations=auto,nosmt nowatchdog tsc=reliable clocksource=tsc intel_iommu=on iommu=pt vfio-pci.ids=10de:27a0,10de:22bc vt.global_cursor_default=0 zswap.enabled=1 zswap.shrinker_enabled=1 zswap.compressor=lz4 zswap.max_pool_percent=20 zswap.zpool=zsmalloc" | tee /etc/kernel/arch_gpupasstrough_cmdline
 
 echo 'ALL_config="/etc/mkinitcpio.conf"
 ALL_kver="/boot/vmlinuz-linux"
