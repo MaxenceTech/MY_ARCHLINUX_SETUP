@@ -40,11 +40,8 @@ do
 done
 
 #==============================================================================
-# Enrolling the TPM
+# Check if secureboot is enabled
 #==============================================================================
-
-echo "Enrolling the TPM"
-enrolledtpm=0
 
 if [ $(sudo sbctl status | grep "Setup Mode" | grep -c "Disabled") -gt 0 ] && [ $(sudo sbctl status | grep "Secure Boot" | grep -c "Enabled") -gt 0 ]; then
 	echo "Secure boot enabled and not in setup mode. Pass !"
