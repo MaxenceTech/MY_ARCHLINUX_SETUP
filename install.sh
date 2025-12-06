@@ -93,8 +93,6 @@ sleep 20
 # DISK PARTITIONING AND FILESYSTEM SETUP
 #==============================================================================
 
-pacman -Sy qrencode --noconfirm
-
 lsblk -d -o NAME,MODEL,SIZE,TYPE | grep nvme
 
 # Discover NVMe disks
@@ -114,23 +112,18 @@ elif [ "$nvme_count" -eq 1 ]; then
     sgdisk --set-alignment=2048 --align-end -n 1:0:+2G -t 1:ef00 "$disk1"    # EFI partition
     sgdisk --set-alignment=2048 --align-end -n 2:0:0 -t 2:8304 "$disk1"      # Root partition
 
-	SAFECHAR='ABCDEFGHJKMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789'
-	rpassword=$(tr -dc $SAFECHAR </dev/urandom | head -c 48 | sed 's/.\{6\}/&-/g; s/-$//' || true)
-	printf %s "$rpassword" | qrencode -t ANSIUTF8
-	read -r -p "Save the root Luks password. Press any key to continue..."
-
-    printf %s "$rpassword" | cryptsetup luksFormat -q \
+	cryptsetup luksFormat -q \
 	    --type=luks2 \
 	    --cipher=aes-xts-plain64 \
 	    --key-size=512 \
 	    --pbkdf=argon2id \
 	    --iter-time=4000 \
+		--verify-passphrase \
 	    --label=encrypted_root \
 	    --pbkdf-memory=2097152 \
 	    --pbkdf-parallel=4 \
 	    "${disk1}p2"
-    printf %s "$rpassword" | cryptsetup open "${disk1}p2" root
-	unset rpassword
+	cryptsetup open "${disk1}p2" root
  
     # Create filesystems
     mkfs.fat -F32 "${disk1}p1"
@@ -179,23 +172,18 @@ elif [ "$nvme_count" -eq 2 ]; then
     sgdisk --set-alignment=2048 --align-end -n 1:0:+2G -t 1:ef00 "$disk1"       # EFI partition
     sgdisk --set-alignment=2048 --align-end -n 2:0:0 -t 2:8304 "$disk1"        # Root partition
 
-	SAFECHAR='ABCDEFGHJKMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789'
-	rpassword=$(tr -dc $SAFECHAR </dev/urandom | head -c 48 | sed 's/.\{6\}/&-/g; s/-$//' || true)
-	printf %s "$rpassword" | qrencode -t ANSIUTF8
-	read -r -p "Save the Root Luks password. Press any key to continue..."
-	
-    printf %s "$rpassword" | cryptsetup luksFormat -q \
+	cryptsetup luksFormat -q \
 	    --type=luks2 \
 	    --cipher=aes-xts-plain64 \
 	    --key-size=512 \
 	    --pbkdf=argon2id \
 	    --iter-time=4000 \
+		--verify-passphrase \
 	    --label=encrypted_root \
 	    --pbkdf-memory=2097152 \
 	    --pbkdf-parallel=4 \
 	    "${disk1}p2"
-    printf %s "$rpassword" | cryptsetup open "${disk1}p2" root
-	unset rpassword
+	cryptsetup open "${disk1}p2" root
 	
     mkfs.fat -F32 "${disk1}p1"
     mkfs.ext4 /dev/mapper/root
