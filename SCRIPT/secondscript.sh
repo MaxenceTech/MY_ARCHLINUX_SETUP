@@ -235,7 +235,7 @@ sudo systemctl enable cups.socket
 # GNOME desktop environment
 sudo pacman -S dmidecode gnome gnome-tweaks gnome-shell-extensions \
     xdg-desktop-portal xdg-desktop-portal-gnome power-profiles-daemon \
-    gnome-themes-extra --noconfirm
+    gnome-themes-extra fwupd --noconfirm
 pacmanerror=$((pacmanerror + $?))
 yay -S reversal-icon-theme-git --noconfirm
 yayerror=$((yayerror + $?))
