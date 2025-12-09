@@ -116,6 +116,7 @@ sed -i 's/^#\s*\(%wheel\s*ALL=(ALL:ALL)\s*ALL\)/\1/' /etc/sudoers
 echo "Configuring ACPI override..."
 mkdir -p /etc/initcpio/acpi_override
 cp /archinstall/CONFIG/ssdt1.aml /etc/initcpio/acpi_override
+cp /archinstall/CONFIG/ssdt12.aml /etc/initcpio/acpi_override
 
 #==============================================================================
 # KERNEL CONFIGURATION
