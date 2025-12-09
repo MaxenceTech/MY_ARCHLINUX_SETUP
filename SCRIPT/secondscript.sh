@@ -241,7 +241,7 @@ yay -S reversal-icon-theme-git --noconfirm
 yayerror=$((yayerror + $?))
 
 sudo sed -i -E 's/^(auth[[:space:]]+optional[[:space:]]+pam_gnome_keyring\.so)/\1 only_if=gdm/' /etc/pam.d/gdm-password 
-sudo sed -i -E 's/^(session[[:space:]]+optional[[:space:]]+pam_gnome_keyring\.so)[[:space:]]+auto_start/\1 only_if=gdm/' /etc/pam.d/filename
+sudo sed -i -E 's/^(session[[:space:]]+optional[[:space:]]+pam_gnome_keyring\.so)[[:space:]]+auto_start/\1 only_if=gdm/' /etc/pam.d/gdm-password
 
 sudo systemctl enable gdm.service
 
