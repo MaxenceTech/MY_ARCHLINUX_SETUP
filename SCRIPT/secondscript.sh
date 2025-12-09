@@ -320,7 +320,7 @@ sudo systemctl enable fstrim.timer
 
 
 # Essential applications
-sudo pacman -S gparted speech-dispatcher libreoffice-still-fr file-roller zip unzip p7zip ttf-dejavu \
+sudo pacman -S gparted speech-dispatcher libreoffice-still-fr file-roller zip unzip p7zip ttf-dejavu kdenlive obs-studio \
     unrar python-pip tk gimp inkscape bolt hunspell-fr noto-fonts-emoji blender cdrtools ttf-fira-code --noconfirm
 pacmanerror=$((pacmanerror + $?))
 yay -S vscodium-bin --noconfirm
@@ -694,6 +694,13 @@ echo 'cgroup_device_acl = [
     "/dev/userfaultfd", "/dev/kvmfr0"
 ]' | sudo tee -a /etc/libvirt/qemu.conf
 echo "user = \"$(whoami)\"" | sudo tee -a /etc/libvirt/qemu.conf
+
+#OBS Plugin Installation
+cd /tmp/looking-glass-B7 || exit 1
+mkdir obs/build
+cd obs/build
+cmake ../
+sudo make install
 
 echo '[input]
 captureOnFocus=yes
