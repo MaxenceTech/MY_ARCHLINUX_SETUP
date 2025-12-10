@@ -699,8 +699,8 @@ echo "user = \"$(whoami)\"" | sudo tee -a /etc/libvirt/qemu.conf
 cd /tmp/looking-glass-B7 || exit 1
 mkdir obs/build
 cd obs/build
-cmake ../
-sudo make install
+cmake -DUSER_INSTALL=1 ../
+make install
 
 echo '[input]
 captureOnFocus=yes
