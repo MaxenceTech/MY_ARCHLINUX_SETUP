@@ -249,12 +249,16 @@ if [ "$nvme_count" -eq 2 ]; then
 	DATAPARTUUIDGREP=$(cryptsetup luksUUID -- "$data_luks_dev")
 	
     mkfs.ext4 /dev/mapper/SECOND_SSD
-	mount --mkdir -o nofail,nodev,nosuid /dev/mapper/SECOND_SSD /mnt/data
+	mount --mkdir -o nodev,nosuid /dev/mapper/SECOND_SSD /mnt/data
 
 	echo "SECOND_SSD UUID=$DATAPARTUUIDGREP /etc/cryptsetup-keys.d/secondssd-keyfile.key luks,discard,no-read-workqueue,no-write-workqueue" | tee -a /mnt/etc/crypttab
 fi
 # Generate filesystem table
 genfstab -U /mnt | tee -a  /mnt/etc/fstab
+
+if [ -d /mnt/data ]; then
+	sudo perl -i.bak -pe 'if (/\/data/ && s/rw,/rw,nofail,/) { $found=1 } END { exit 1 unless $found }' /mnt/etc/fstab
+fi
 
 # Copy installation files to target system
 mkdir /mnt/archinstall
