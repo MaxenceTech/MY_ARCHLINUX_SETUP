@@ -131,7 +131,7 @@ elif [ "$nvme_count" -eq 1 ]; then
 
     # Mount filesystems
     mount /dev/mapper/root /mnt
-    mount --mkdir -t vfat -o fmask=0077,dmask=0077 "${disk1}p1" /mnt/efi
+    mount --mkdir -t vfat -o fmask=0077,dmask=0077,nodev,nosuid,noexec "${disk1}p1" /mnt/efi
 	mkswap -U clear --label swapfile --size 16G --file /mnt/swapfile
     swapon /mnt/swapfile
 
@@ -190,7 +190,7 @@ elif [ "$nvme_count" -eq 2 ]; then
 
     # Mount all filesystems
     mount /dev/mapper/root /mnt
-    mount --mkdir -t vfat -o fmask=0077,dmask=0077 "${disk1}p1" /mnt/efi
+    mount --mkdir -t vfat -o fmask=0077,dmask=0077,nodev,nosuid,noexec "${disk1}p1" /mnt/efi
 	mkswap -U clear --label swapfile --size 16G --file /mnt/swapfile
     swapon /mnt/swapfile
 
@@ -249,7 +249,7 @@ if [ "$nvme_count" -eq 2 ]; then
 	DATAPARTUUIDGREP=$(cryptsetup luksUUID -- "$data_luks_dev")
 	
     mkfs.ext4 /dev/mapper/SECOND_SSD
-	mount --mkdir /dev/mapper/SECOND_SSD /mnt/data
+	mount --mkdir -o nofail /dev/mapper/SECOND_SSD /mnt/data
 
 	echo "SECOND_SSD UUID=$DATAPARTUUIDGREP /etc/cryptsetup-keys.d/secondssd-keyfile.key luks,discard,no-read-workqueue,no-write-workqueue" | tee -a /mnt/etc/crypttab
 fi
