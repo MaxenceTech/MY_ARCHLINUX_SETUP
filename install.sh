@@ -123,7 +123,7 @@ elif [ "$nvme_count" -eq 1 ]; then
 	    --pbkdf-memory=2097152 \
 	    --pbkdf-parallel=4 \
 	    "${disk1}p2"
-	cryptsetup open "${disk1}p2" root
+	cryptsetup --perf-no_read_workqueue --perf-no_write_workqueue --allow-discards --persistent open "${disk1}p2" root
  
     # Create filesystems
     mkfs.fat -F32 "${disk1}p1"
@@ -183,7 +183,7 @@ elif [ "$nvme_count" -eq 2 ]; then
 	    --pbkdf-memory=2097152 \
 	    --pbkdf-parallel=4 \
 	    "${disk1}p2"
-	cryptsetup open "${disk1}p2" root
+	cryptsetup --perf-no_read_workqueue --perf-no_write_workqueue --allow-discards --persistent open "${disk1}p2" root
 	
     mkfs.fat -F32 "${disk1}p1"
     mkfs.ext4 /dev/mapper/root
@@ -238,7 +238,7 @@ if [ "$nvme_count" -eq 2 ]; then
 		--key-file=/mnt/etc/cryptsetup-keys.d/secondssd-keyfile.key  \
 		--keyfile-size=2048 \
 	    "${disk2}p1"
-    cryptsetup open "${disk2}p1" SECOND_SSD --key-file=/mnt/etc/cryptsetup-keys.d/secondssd-keyfile.key
+    cryptsetup --perf-no_read_workqueue --perf-no_write_workqueue --allow-discards --persistent open "${disk2}p1" SECOND_SSD --key-file=/mnt/etc/cryptsetup-keys.d/secondssd-keyfile.key
 
 	data_luks_dev=$(LC_ALL=C cryptsetup status SECOND_SSD | awk -F': ' '/device:/ {print $2}')
 	# Trim leading
@@ -251,7 +251,7 @@ if [ "$nvme_count" -eq 2 ]; then
     mkfs.ext4 /dev/mapper/SECOND_SSD
 	mount --mkdir /dev/mapper/SECOND_SSD /mnt/data
 
-	echo "SECOND_SSD UUID=$DATAPARTUUIDGREP /etc/cryptsetup-keys.d/secondssd-keyfile.key luks,discard" | tee -a /mnt/etc/crypttab
+	echo "SECOND_SSD UUID=$DATAPARTUUIDGREP /etc/cryptsetup-keys.d/secondssd-keyfile.key luks,discard,no-read-workqueue,no-write-workqueue" | tee -a /mnt/etc/crypttab
 fi
 # Generate filesystem table
 genfstab -U /mnt | tee -a  /mnt/etc/fstab
