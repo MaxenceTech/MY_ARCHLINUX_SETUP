@@ -249,7 +249,7 @@ if [ "$nvme_count" -eq 2 ]; then
 	DATAPARTUUIDGREP=$(cryptsetup luksUUID -- "$data_luks_dev")
 	
     mkfs.ext4 /dev/mapper/SECOND_SSD
-	mount --mkdir -o nofail /dev/mapper/SECOND_SSD /mnt/data
+	mount --mkdir -o nofail,nodev,nosuid /dev/mapper/SECOND_SSD /mnt/data
 
 	echo "SECOND_SSD UUID=$DATAPARTUUIDGREP /etc/cryptsetup-keys.d/secondssd-keyfile.key luks,discard,no-read-workqueue,no-write-workqueue" | tee -a /mnt/etc/crypttab
 fi
