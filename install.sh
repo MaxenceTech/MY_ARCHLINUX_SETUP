@@ -73,12 +73,12 @@ done
 
 for mount in $(mount | grep '/dev/nvme' | cut -d' ' -f1); do
   echo "Unmounting $mount"
-  sudo umount $mount 2>/dev/null || true
+  umount $mount 2>/dev/null || true
 done
 
 for swap in $(cat /proc/swaps | grep '/dev/nvme' | cut -d' ' -f1); do
   echo "Disabling swap on $swap"
-  sudo swapoff $swap 2>/dev/null || true
+  swapoff $swap 2>/dev/null || true
 done
 
 for disk in /dev/nvme*n1; do
@@ -257,7 +257,7 @@ fi
 genfstab -U /mnt | tee -a  /mnt/etc/fstab
 
 if [ -d /mnt/data ]; then
-	sudo perl -i.bak -pe 'if (/\/data/ && s/rw,/rw,nofail,/) { $found=1 } END { exit 1 unless $found }' /mnt/etc/fstab
+	perl -i.bak -pe 'if (/\/data/ && s/rw,/rw,nofail,/) { $found=1 } END { exit 1 unless $found }' /mnt/etc/fstab
 fi
 
 # Copy installation files to target system
