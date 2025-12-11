@@ -491,6 +491,7 @@ CLUTTER_BACKEND=wayland
 SDL_VIDEODRIVER="wayland,x11"
 XDG_SESSION_TYPE=wayland
 GSK_RENDERER=ngl
+SUDO_EDITOR=nano
 OCL_ICD_FILENAMES=intel.icd:nvidia.icd
 __EGL_VENDOR_LIBRARY_FILENAMES=/usr/share/glvnd/egl_vendor.d/50_mesa.json
 __GLX_VENDOR_LIBRARY_NAME=mesa
@@ -737,8 +738,9 @@ HibernateKeyIgnoreInhibited=no" | sudo tee /etc/systemd/logind.conf.d/no-hiberna
 sudo rm -rf /archinstall
 sudo rm /usr/local/bin/mkinitcpio-editor
 
-# disable root login
+# Security Improve
 sudo passwd --lock root
+sudo sed -i.bak '0,/^auth/s/^auth/auth optional pam_faildelay.so delay=4000000\n&/' /etc/pam.d/system-login
 
 if [ "$yayerror" -eq 0 ]; then
     echo "Every yay installation occurred without error."
