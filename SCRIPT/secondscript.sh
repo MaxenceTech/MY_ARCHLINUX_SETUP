@@ -767,6 +767,12 @@ EOF
 gsettings set org.gnome.desktop.privacy usb-protection true
 gsettings set org.gnome.desktop.privacy usb-protection-level always
 
+sudo pacman -S apparmor --noconfirm
+sleep 10
+sudo systemctl enable --now apparmor.service
+sudo sed -i "s/$/ lsm=$(cat /sys/kernel/security/lsm | sed -e 's/capability,//' -e 's/,bpf/,apparmor,bpf/')/" /etc/kernel/arch*cmdline
+sudo mkinitcpio -p linux
+
 if [ "$yayerror" -eq 0 ]; then
     echo "Every yay installation occurred without error."
 else
