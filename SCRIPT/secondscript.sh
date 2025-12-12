@@ -763,18 +763,6 @@ EOF
 gsettings set org.gnome.desktop.privacy usb-protection true
 gsettings set org.gnome.desktop.privacy usb-protection-level always
 
-sudo pacman -S apparmor --noconfirm
-sleep 10
-sudo systemctl enable apparmor.service
-sudo sed -i "s/$/ lsm=$(cat /sys/kernel/security/lsm | sed -e 's/capability,//' -e 's/,bpf/,apparmor,bpf/')/" /etc/kernel/arch*cmdline
-echo 'write-cache' | sudo tee -a /etc/apparmor/parser.conf
-echo 'cache-loc /etc/apparmor/earlypolicy/' | sudo tee -a /etc/apparmor/parser.conf
-echo 'Optimize=compress-fast' | sudo tee -a /etc/apparmor/parser.conf
-yay -S apparmor.d-git
-sudo mkdir -p /etc/apparmor.d/tunables/xdg-user-dirs.d/apparmor.d.d
-sudo tee /etc/apparmor.d/tunables/xdg-user-dirs.d/apparmor.d.d/local << 'EOF'
-
-EOF
 sudo mkinitcpio -p linux
 
 if [ "$yayerror" -eq 0 ]; then
