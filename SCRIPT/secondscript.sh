@@ -744,6 +744,7 @@ sudo sed -i.bak '0,/^auth/s/^auth/auth optional pam_faildelay.so delay=4000000\n
 
 sudo pacman -S usbguard --noconfirm
 sudo sed -i "s/^IPCAllowedUsers=root/& $USER/" /etc/usbguard/usbguard-daemon.conf
+sudo sed -i 's/^PresentControllerPolicy=.*/PresentControllerPolicy=apply-policy/' /etc/usbguard/usbguard-daemon.conf
 sudo usbguard generate-policy | sudo tee -a /etc/usbguard/rules.conf
 sudo systemctl enable --now usbguard-dbus.service
 
