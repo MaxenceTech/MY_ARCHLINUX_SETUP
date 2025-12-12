@@ -473,11 +473,6 @@ if [ -d /data ]; then
     sudo ln -s /data/libvirt_images /var/lib/libvirt/secondssd_images
 fi
 
-# Fix lid
-sudo mkdir /etc/systemd/logind.conf.d
-echo "[Login]
-HoldoffTimeoutSec=10s" | sudo tee /etc/systemd/logind.conf.d/99-fixlid.conf
-
 
 # Wayland support enable 
 
