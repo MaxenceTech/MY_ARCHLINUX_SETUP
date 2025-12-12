@@ -101,7 +101,7 @@ pacmanerror=$((pacmanerror + $?))
 #==============================================================================
 # AUR HELPER INSTALLATION
 #==============================================================================
-
+sudo perl -i.bak -pe 'if (/^OPTIONS=/ && s/(?<!\!)debug/!debug/) { $found=1 } END { exit 1 unless $found }' /etc/makepkg.conf
 # Install Yay AUR helper
 echo "Installing AUR helper (yay)..."
 cd /tmp || exit 1
