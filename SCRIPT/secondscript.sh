@@ -772,6 +772,7 @@ sudo pacman -S apparmor --noconfirm
 sleep 10
 sudo systemctl enable --now apparmor.service
 sudo sed -i "s/$/ lsm=$(cat /sys/kernel/security/lsm | sed -e 's/capability,//' -e 's/,bpf/,apparmor,bpf/')/" /etc/kernel/arch*cmdline
+sudo sed -i 's/^#write-cache/write-cache/' /etc/apparmor/parser.conf
 sudo mkinitcpio -p linux
 
 if [ "$yayerror" -eq 0 ]; then
