@@ -770,9 +770,14 @@ gsettings set org.gnome.desktop.privacy usb-protection-level always
 
 sudo pacman -S apparmor --noconfirm
 sleep 10
-sudo systemctl enable --now apparmor.service
+sudo systemctl enable apparmor.service
 sudo sed -i "s/$/ lsm=$(cat /sys/kernel/security/lsm | sed -e 's/capability,//' -e 's/,bpf/,apparmor,bpf/')/" /etc/kernel/arch*cmdline
-sudo sed -i 's/^#write-cache/write-cache/' /etc/apparmor/parser.conf
+echo 'write-cache' | sudo tee -a /etc/apparmor/parser.conf
+echo 'cache-loc /etc/apparmor/earlypolicy/' | sudo tee -a /etc/apparmor/parser.conf
+echo 'Optimize=compress-fast' | sudo tee -a /etc/apparmor/parser.conf
+yay -S apparmor.d-git
+sudo mkdir -p /etc/apparmor.d/tunables/xdg-user-dirs.d/apparmor.d.d
+
 sudo mkinitcpio -p linux
 
 if [ "$yayerror" -eq 0 ]; then
