@@ -777,7 +777,9 @@ echo 'cache-loc /etc/apparmor/earlypolicy/' | sudo tee -a /etc/apparmor/parser.c
 echo 'Optimize=compress-fast' | sudo tee -a /etc/apparmor/parser.conf
 yay -S apparmor.d-git
 sudo mkdir -p /etc/apparmor.d/tunables/xdg-user-dirs.d/apparmor.d.d
+sudo tee /etc/apparmor.d/tunables/xdg-user-dirs.d/apparmor.d.d/local << 'EOF'
 
+EOF
 sudo mkinitcpio -p linux
 
 if [ "$yayerror" -eq 0 ]; then
