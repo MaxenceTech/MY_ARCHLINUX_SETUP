@@ -694,7 +694,7 @@ echo "user = \"$(whoami)\"" | sudo tee -a /etc/libvirt/qemu.conf
 #OBS Plugin Installation
 cd /tmp/looking-glass-B7 || exit 1
 mkdir obs/build
-cd obs/build
+cd obs/build  || exit 1
 cmake -DUSER_INSTALL=1 ../
 make install
 
