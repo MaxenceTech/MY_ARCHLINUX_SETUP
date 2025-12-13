@@ -332,6 +332,9 @@ yayerror=$((yayerror + $?))
 yay -S mullvad-vpn-bin --noconfirm
 yayerror=$((yayerror + $?))
 
+echo 'export PATH="$PATH:/home/mux/.local/bin"' >> ~/.bashrc
+echo 'export PATH="$PATH:/home/mux/.local/bin"' >> ~/.zshrc 
+
 # Android file system support (grouped)
 sudo pacman -S mtpfs gvfs-mtp gvfs-gphoto2 libmtp --noconfirm
 pacmanerror=$((pacmanerror + $?))
