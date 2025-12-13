@@ -724,6 +724,7 @@ AllowHibernation=no
 AllowHybridSleep=no
 AllowSuspendThenHibernate=no" | sudo tee /etc/systemd/sleep.conf.d/no-hibernate.conf
 
+sudo mkdir /etc/systemd/logind.conf.d
 echo "[Login]
 HibernateKeyIgnoreInhibited=no" | sudo tee /etc/systemd/logind.conf.d/no-hibernate.conf
 
