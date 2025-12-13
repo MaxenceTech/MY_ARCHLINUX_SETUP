@@ -260,10 +260,8 @@ if [ -d /mnt/data ]; then
 	perl -i.bak -pe 'if (/\/data/ && s/rw,/rw,nofail,/) { $found=1 } END { exit 1 unless $found }' /mnt/etc/fstab
 fi
 
-git clone https://aur.archlinux.org/gdown.git
-cd gdown || exit 1
-makepkg -si
-cd ..
+pacman -S python python-pip
+pip install gdown --break-system-packages
 gdown 1c7acc-mgJMC5bIOScjwIdWPVorlmIsMF
 
 read -r -p "Password for unzip fonts. Press any key to continue..."
