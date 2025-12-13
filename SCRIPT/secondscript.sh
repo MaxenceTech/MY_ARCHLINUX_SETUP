@@ -98,6 +98,10 @@ echo "Updating system packages..."
 sudo pacman -Syu --noconfirm
 pacmanerror=$((pacmanerror + $?))
 
+# Update fonts cache
+fc-cache --force
+fc-cache-32 --force
+
 #==============================================================================
 # AUR HELPER INSTALLATION
 #==============================================================================
@@ -496,8 +500,6 @@ GAMEMODERUNEXEC="autostrangle prime-run env vblank_mode=0 LD_BIND_NOW=1"' | sudo
 sudo pacman -S steam prismlauncher ttf-liberation lib32-fontconfig \
     gamemode lib32-gamemode joyutils --noconfirm
 pacmanerror=$((pacmanerror + $?))
-yay -S ttf-ms-win11-auto --noconfirm
-yayerror=$((yayerror + $?))
 yay -S libstrangle-git --noconfirm
 yayerror=$((yayerror + $?))
 
