@@ -15,7 +15,7 @@ set -euo pipefail
 
 # Set French keyboard layout
 loadkeys fr-pc
-mount -o remount,size=8G /run/archiso/cowspace
+mount -o remount,size=2G /run/archiso/cowspace
 
 while :; do
   read -p "The script will erase all yours NVME drives. Do you want to continue ? (y/n) " yn
