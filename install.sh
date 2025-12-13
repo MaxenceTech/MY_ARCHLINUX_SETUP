@@ -260,6 +260,21 @@ if [ -d /mnt/data ]; then
 	perl -i.bak -pe 'if (/\/data/ && s/rw,/rw,nofail,/) { $found=1 } END { exit 1 unless $found }' /mnt/etc/fstab
 fi
 
+git clone https://aur.archlinux.org/gdown.git
+cd gdown || exit 1
+makepkg -si
+gdown 1c7acc-mgJMC5bIOScjwIdWPVorlmIsMF
+
+read -r -p "Password for unzip fonts. Press any key to continue..."
+7z x fonts.zip
+rm fonts.zip
+mkdir /mnt/usr/local/share/fonts
+mkdir /mnt/usr/local/share/fonts/WindowsFonts
+cp fonts/* /mnt/usr/local/share/fonts/WindowsFonts/
+
+rm -rf fonts
+
+
 # Copy installation files to target system
 mkdir /mnt/archinstall
 cp -r ./* /mnt/archinstall && chmod -R 755 /mnt/archinstall/SCRIPT/*
