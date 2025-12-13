@@ -267,6 +267,7 @@ cd ..
 gdown 1c7acc-mgJMC5bIOScjwIdWPVorlmIsMF
 
 read -r -p "Password for unzip fonts. Press any key to continue..."
+pacman -S 7zip --noconfirm
 7z x fonts.zip
 rm fonts.zip
 mkdir /mnt/usr/local/share/fonts
