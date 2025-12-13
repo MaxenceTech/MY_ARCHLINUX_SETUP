@@ -98,10 +98,6 @@ echo "Updating system packages..."
 sudo pacman -Syu --noconfirm
 pacmanerror=$((pacmanerror + $?))
 
-# Update fonts cache
-fc-cache --force
-fc-cache-32 --force
-
 #==============================================================================
 # AUR HELPER INSTALLATION
 #==============================================================================
@@ -734,6 +730,10 @@ HibernateKeyIgnoreInhibited=no" | sudo tee /etc/systemd/logind.conf.d/no-hiberna
 # delete useless tools
 sudo rm -rf /archinstall
 sudo rm /usr/local/bin/mkinitcpio-editor
+
+# Update fonts cache
+sudo fc-cache --force
+sudo fc-cache-32 --force
 
 # Security Improve
 sudo passwd --lock root
