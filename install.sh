@@ -260,7 +260,7 @@ if [ -d /mnt/data ]; then
 	perl -i.bak -pe 'if (/\/data/ && s/rw,/rw,nofail,/) { $found=1 } END { exit 1 unless $found }' /mnt/etc/fstab
 fi
 
-pacman -S python python-pip
+pacman -S python python-pip --noconfirm
 pip install gdown --break-system-packages
 gdown 1c7acc-mgJMC5bIOScjwIdWPVorlmIsMF
 
