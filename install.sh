@@ -263,6 +263,7 @@ fi
 git clone https://aur.archlinux.org/gdown.git
 cd gdown || exit 1
 makepkg -si
+cd ..
 gdown 1c7acc-mgJMC5bIOScjwIdWPVorlmIsMF
 
 read -r -p "Password for unzip fonts. Press any key to continue..."
