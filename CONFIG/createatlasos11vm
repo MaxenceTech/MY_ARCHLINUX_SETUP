@@ -362,7 +362,7 @@ done
 # Redimensionnement du disque
 # =========================
 echo "[INFO] Redimensionnement de l'image à ${size}G..."
-qemu-img resize "$DISKLOCATION" "${size}G"
+sudo qemu-img resize "$DISKLOCATION" "${size}G"
 echo "[INFO] Préparation du périphérique NBD..."
 sudo modprobe nbd max_part=8
 sudo qemu-nbd --disconnect /dev/nbd0 || true
