@@ -74,7 +74,7 @@ if [ -f "$DISKLOCATION" ] || virsh list --all --name | grep -qw "$COMPLETEVMNAME
   exit
 else
   echo "[INFO] Copie de l'image de base vers $DISKLOCATION..."
-  cp "$PATHBASEIMAGE" "$DISKLOCATION"
+  sudo cp "$PATHBASEIMAGE" "$DISKLOCATION"
   echo "[OK] Copie terminée."
 fi
 
