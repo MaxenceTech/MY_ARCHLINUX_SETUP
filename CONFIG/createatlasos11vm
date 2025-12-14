@@ -36,11 +36,11 @@ while :; do
 done
 
 while :; do
-    read -r -p "Quelle taille souhaitez-vous pour le disque principal (en Go, 27 minimum) ? " size
-    if [[ $size =~ ^[0-9]{1,63}$ ]]  && [ $size -ge 27 ]; then
+    read -r -p "Quelle taille souhaitez-vous pour le disque principal (en Go, 28 minimum) ? " size
+    if [[ $size =~ ^[0-9]{1,63}$ ]]  && [ $size -ge 28 ]; then
         break
     else
-        echo "Taille invalide. Utilisez des chiffres uniquement et une taille supérieure ou égale à 27 Go."
+        echo "Taille invalide. Utilisez des chiffres uniquement et une taille supérieure ou égale à 28 Go."
     fi
 done
 
