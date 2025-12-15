@@ -212,5 +212,4 @@ else
     echo "There was an error in one or more pacman installations."
 fi
 
-echo "First configuration script completed. Press any key to continue..."
-read -r -p "Press any key to continue..."
+read -r -p "First configuration script completed. Press any key to continue..."
