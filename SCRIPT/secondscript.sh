@@ -384,24 +384,10 @@ echo '#!/bin/bash
 
 # Read the value from /sys/class/power_supply/ADP1/online
 online_status=$(cat /sys/class/power_supply/ADP1/online)
-gamemodeout="$(runuser -l "$(last | cut -f 1 -d " " | sed "1p;d")" -c "LANG=C gamemoded -s")"
-
-if echo "$gamemodeout" | grep -wiq "active"; then
-    gamemodestatus=1   # actif
-else   
-    gamemodestatus=0  # inactif
-fi
-
 
 # Check the value and run different scripts based on it
 if [ "$online_status" -eq 0 ]; then
-    if [ "$gamemodestatus" -eq 1 ] || [ "$1" = "-g" ]; then
-        # Run the script for when online status is 0 (unplugged) and in (or will be in) gamemode
-        exec /etc/acpi/SCRIPT/gamemode-unplug.sh
-    else
-        # Run the script for when online status is 0 (unplugged)
-        exec /etc/acpi/SCRIPT/a-unplug.sh
-    fi
+    exec /etc/acpi/SCRIPT/a-unplug.sh
 else
     # Run the script for when online status is 1 (plugged in)
     exec /etc/acpi/SCRIPT/a-plug.sh
