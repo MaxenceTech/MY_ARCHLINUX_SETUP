@@ -195,7 +195,7 @@ echo "/usr/lib" | sudo tee /etc/ld.so.conf.d/00-usrlib.conf
 # Add custom prime-run command (with opencl support redirection)
 
 echo '#!/bin/bash
-exec env OCL_ICD_FILENAMES=nvidia.icd:intel.icd __NV_PRIME_RENDER_OFFLOAD=1 __EGL_VENDOR_LIBRARY_FILENAMES=/usr/share/glvnd/egl_vendor.d/10_nvidia.json __GLX_VENDOR_LIBRARY_NAME=nvidia __VK_LAYER_NV_optimus=NVIDIA_only "$@"' | sudo tee /usr/local/bin/prime-run
+exec env OCL_ICD_FILENAMES=nvidia.icd:intel.icd __NV_PRIME_RENDER_OFFLOAD=1 __EGL_VENDOR_LIBRARY_FILENAMES=/usr/share/glvnd/egl_vendor.d/10_nvidia.json MESA_VK_DEVICE_SELECT=10de:27a0 __GLX_VENDOR_LIBRARY_NAME=nvidia __VK_LAYER_NV_optimus=NVIDIA_only "$@"' | sudo tee /usr/local/bin/prime-run
 sudo chmod 755 /usr/local/bin/prime-run
 
 # Dbus
@@ -474,7 +474,7 @@ QT_QPA_PLATFORM="wayland;xcb"
 CLUTTER_BACKEND=wayland
 SDL_VIDEODRIVER="wayland,x11"
 XDG_SESSION_TYPE=wayland
-GSK_RENDERER=ngl
+MESA_VK_DEVICE_SELECT=8086:a78b
 SUDO_EDITOR=nano
 OCL_ICD_FILENAMES=intel.icd:nvidia.icd
 __EGL_VENDOR_LIBRARY_FILENAMES=/usr/share/glvnd/egl_vendor.d/50_mesa.json
