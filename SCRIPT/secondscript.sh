@@ -475,6 +475,7 @@ CLUTTER_BACKEND=wayland
 SDL_VIDEODRIVER="wayland,x11"
 XDG_SESSION_TYPE=wayland
 MESA_VK_DEVICE_SELECT=8086:a78b
+GSK_RENDERER=ngl
 SUDO_EDITOR=nano
 OCL_ICD_FILENAMES=intel.icd:nvidia.icd
 __EGL_VENDOR_LIBRARY_FILENAMES=/usr/share/glvnd/egl_vendor.d/50_mesa.json
