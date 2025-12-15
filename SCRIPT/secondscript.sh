@@ -492,8 +492,7 @@ GSK_RENDERER=ngl
 SUDO_EDITOR=nano
 OCL_ICD_FILENAMES=intel.icd:nvidia.icd
 __EGL_VENDOR_LIBRARY_FILENAMES=/usr/share/glvnd/egl_vendor.d/50_mesa.json
-__GLX_VENDOR_LIBRARY_NAME=mesa
-GAMEMODERUNEXEC="autostrangle prime-run env vblank_mode=0 LD_BIND_NOW=1"' | sudo tee -a /etc/environment
+__GLX_VENDOR_LIBRARY_NAME=mesa' | sudo tee -a /etc/environment
 
 sudo tee /usr/local/bin/setpci-latency.sh > /dev/null << 'EOF'
 #!/bin/sh
