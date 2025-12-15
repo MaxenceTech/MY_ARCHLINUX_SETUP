@@ -321,7 +321,7 @@ sudo systemctl enable fstrim.timer
 
 # Essential applications
 sudo pacman -S gparted speech-dispatcher libreoffice-still-fr file-roller zip unzip p7zip ttf-dejavu kdenlive obs-studio \
-    unrar python-pip tk gimp inkscape bolt hunspell-fr noto-fonts-emoji blender cdrtools ttf-fira-code qbittorrent --noconfirm
+    unrar python-pip tk gimp inkscape bolt hunspell-fr noto-fonts-emoji blender cdrtools ttf-fira-code ttf-liberation lib32-fontconfig qbittorrent --noconfirm
 pacmanerror=$((pacmanerror + $?))
 yay -S vscodium-bin --noconfirm
 yayerror=$((yayerror + $?))
@@ -494,11 +494,6 @@ OCL_ICD_FILENAMES=intel.icd:nvidia.icd
 __EGL_VENDOR_LIBRARY_FILENAMES=/usr/share/glvnd/egl_vendor.d/50_mesa.json
 __GLX_VENDOR_LIBRARY_NAME=mesa
 GAMEMODERUNEXEC="autostrangle prime-run env vblank_mode=0 LD_BIND_NOW=1"' | sudo tee -a /etc/environment
-
-# Gaming support
-sudo pacman -S steam prismlauncher ttf-liberation lib32-fontconfig \
-    gamemode lib32-gamemode joyutils --noconfirm
-pacmanerror=$((pacmanerror + $?))
 
 sudo tee /usr/local/bin/setpci-latency.sh > /dev/null << 'EOF'
 #!/bin/sh
