@@ -17,10 +17,6 @@ cd /archinstall/SCRIPT
 ./secondscript.sh
 ```
 
-## NB :
-### Informations sur gamemode
-Gamemode utilisera libstrangle pour limiter le FPS à 72 lorsque certains écrans (projecteur LG ou téléviseur Samsung) sont détectés ou lorsque l'appareil fonctionne sur batterie. Pour contourner cette limite, utilisez STRANGLE_FPS=0 et/ou STRANGLE_FPS_BATTERY=0 après gamemoderun
-
 ### Pour les images libvirt, voici ma recommandation en matière d'autorisation : 
 ```
 sudo chown ${USER}:libvirt-qemu /var/lib/libvirt/images/*.qcow2
