@@ -418,6 +418,7 @@ read -r -p "Press any key to continue..."
 
 set +euo pipefail
 
+sudo rm -rf /var/cache/pacman/pkg/download-*
 yay -Scc --noconfirm
 yes | LANG=C sudo pacman -Scc
 go clean -cache
