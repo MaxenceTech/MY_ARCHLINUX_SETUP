@@ -178,13 +178,13 @@ sudo sed -i -E 's/^(session[[:space:]]+optional[[:space:]]+pam_gnome_keyring\.so
 
 sudo systemctl enable gdm.service
 
-#acpid
-sudo pacman -S acpid --noconfirm
-pacmanerror=$((pacmanerror + $?))
-sudo cp -r /archinstall/SCRIPT/ACPID/* /etc/acpi
-sudo chmod +x /etc/acpi/handler.sh
-sudo chmod +x /etc/acpi/SCRIPT/*
-sudo systemctl enable --now acpid.service
+#acpid remplacement
+
+echo 'SUBSYSTEM=="power_supply", ENV{POWER_SUPPLY_NAME}=="ADP1", ENV{POWER_SUPPLY_ONLINE}=="1", RUN+="/usr/local/bin/powerprofile-when-pluged"
+SUBSYSTEM=="power_supply", ENV{POWER_SUPPLY_NAME}=="ADP1", ENV{POWER_SUPPLY_ONLINE}=="0", RUN+="/usr/local/bin/powerprofile-when-unpluged"' | sudo tee /etc/udev/rules.d/99-ac.rules
+
+sudo cp -r /archinstall/SCRIPT/ACPID/* /usr/local/bin
+sudo chmod +x /usr/local/bin/powerprofile-when-*
 
 # Fix keyboard layout
 sudo localectl set-x11-keymap fr
@@ -286,10 +286,10 @@ online_status=$(cat /sys/class/power_supply/ADP1/online)
 
 # Check the value and run different scripts based on it
 if [ "$online_status" -eq 0 ]; then
-    exec /etc/acpi/SCRIPT/a-unplug.sh
+    exec /usr/local/bin/powerprofile-when-unpluged
 else
     # Run the script for when online status is 1 (plugged in)
-    exec /etc/acpi/SCRIPT/a-plug.sh
+    exec /usr/local/bin/powerprofile-when-pluged
 fi
 ' | sudo tee /usr/local/bin/power-detect 
 sudo chmod 700 /usr/local/bin/power-detect
