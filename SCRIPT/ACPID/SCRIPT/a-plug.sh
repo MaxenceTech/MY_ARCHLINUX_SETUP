@@ -31,6 +31,3 @@ echo 0 | tee /sys/devices/system/cpu/cpu*/power/energy_perf_bias
 if [ -f /tmp/brightness-saved ]; then
     tee /sys/class/backlight/intel_backlight/brightness < /tmp/brightness-saved
 fi
-
-# Deblock TDP after unplug-plug
-systemctl restart nvidia-powerd.service
