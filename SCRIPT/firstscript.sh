@@ -29,11 +29,9 @@ echo "Updating system packages..."
 pacman -Syu --noconfirm
 pacmanerror=$((pacmanerror + $?))
 
-mkdir /etc/pacman.d/hooks
-
 # Install essential system packages
 echo "Installing base development and networking packages..."
-pacman -S sbctl nano base-devel openssh networkmanager wpa_supplicant wireless_tools \
+pacman -S nano base-devel openssh networkmanager wpa_supplicant wireless_tools \
     netctl dialog iputils man git --noconfirm
 pacmanerror=$((pacmanerror + $?))
 
@@ -109,16 +107,6 @@ set -euo pipefail
 sed -i 's/^#\s*\(%wheel\s*ALL=(ALL:ALL)\s*ALL\)/\1/' /etc/sudoers
 
 #==============================================================================
-# ACPI CONFIGURATION
-#==============================================================================
-
-# Fix ACPI error with custom SSDT
-echo "Configuring ACPI override..."
-mkdir -p /etc/initcpio/acpi_override
-cp /archinstall/CONFIG/ssdt1.aml /etc/initcpio/acpi_override
-cp /archinstall/CONFIG/ssdt12.aml /etc/initcpio/acpi_override
-
-#==============================================================================
 # KERNEL CONFIGURATION
 #==============================================================================
 
@@ -127,7 +115,7 @@ echo "Updating mkinitcpio configuration..."
 hooksvar=$(grep -v  -n "^#" /etc/mkinitcpio.conf | grep 'HOOKS=')
 ligne="${hooksvar%:*}"
 sed -i "$((ligne)) d" /etc/mkinitcpio.conf
-sed -i "$((ligne-1)) a HOOKS=(systemd autodetect microcode modconf keyboard sd-vconsole block sd-encrypt filesystems fsck acpi_override)" /etc/mkinitcpio.conf
+sed -i "$((ligne-1)) a HOOKS=(systemd autodetect microcode modconf keyboard sd-vconsole block sd-encrypt filesystems fsck)" /etc/mkinitcpio.conf
 
 #==============================================================================
 # SYSTEM PERFORMANCE TWEAKS
@@ -135,9 +123,9 @@ sed -i "$((ligne-1)) a HOOKS=(systemd autodetect microcode modconf keyboard sd-v
 
 # Configure system performance parameters
 echo "Applying system performance tweaks..."
-echo "vm.swappiness=10
-vm.dirty_bytes = 4294967296
-vm.dirty_background_bytes = 2147483648
+echo "vm.swappiness=20
+vm.dirty_ratio = 10
+vm.dirty_background_ratio = 5
 vm.vfs_cache_pressure=50" | tee /etc/sysctl.d/99-ramtweaks.conf
 
 # Blacklist Watchdogs module
@@ -149,7 +137,7 @@ echo "blacklist iTCO_wdt" | tee /etc/modprobe.d/blacklist_intelwatchdog.conf
 
 # Configure custom kernel modules and microcode
 echo "Configuring bootloader..."
-mkinitcpio-editor -a xe lz4
+mkinitcpio-editor -a i915 lz4
 pacman -S efibootmgr intel-ucode --noconfirm
 pacmanerror=$((pacmanerror + $?))
 
@@ -164,24 +152,22 @@ PARTUUIDGREP=$(cryptsetup luksUUID -- "$luks_dev")
 
 # Create boot entries for different configurations
 
-echo "rd.luks.options=discard,no-read-workqueue,no-write-workqueue rd.luks.name=$PARTUUIDGREP=root root=/dev/mapper/root rw quiet mitigations=auto,nosmt nowatchdog tsc=reliable clocksource=tsc intel_iommu=on iommu=pt vt.global_cursor_default=0 zswap.enabled=1 zswap.shrinker_enabled=1 zswap.compressor=lz4 zswap.max_pool_percent=20 zswap.zpool=zsmalloc modprobe.blacklist=kvmfr video=HDMI-A-1:d video=DP-1:d video=DP-2:d" | tee /etc/kernel/arch_cmdline
-echo "rd.luks.options=discard,no-read-workqueue,no-write-workqueue rd.luks.name=$PARTUUIDGREP=root root=/dev/mapper/root rw quiet mitigations=auto,nosmt nowatchdog tsc=reliable clocksource=tsc intel_iommu=on iommu=pt vfio-pci.ids=10de:27a0,10de:22bc vt.global_cursor_default=0 zswap.enabled=1 zswap.shrinker_enabled=1 zswap.compressor=lz4 zswap.max_pool_percent=20 zswap.zpool=zsmalloc" | tee /etc/kernel/arch_gpupasstrough_cmdline
-
+echo "rd.luks.options=discard,no-read-workqueue,no-write-workqueue rd.luks.name=$PARTUUIDGREP=root root=/dev/mapper/root rw quiet mitigations=auto,nosmt nowatchdog tsc=reliable clocksource=tsc intel_iommu=on iommu=pt vt.global_cursor_default=0 zswap.enabled=1 zswap.shrinker_enabled=1 zswap.compressor=lz4 zswap.max_pool_percent=50 zswap.zpool=zsmalloc" | tee /etc/kernel/arch_cmdline
 echo 'ALL_config="/etc/mkinitcpio.conf"
 ALL_kver="/boot/vmlinuz-linux"
 
-PRESETS=('nvidia' 'gpupasstrough')
+PRESETS=('default' 'fallback')
 
 #default_config="/etc/mkinitcpio.conf"
 #default_image="/boot/initramfs-linux.img"
-nvidia_uki="/efi/EFI/Linux/nvidia-linux.efi"
-nvidia_options="--cmdline /etc/kernel/arch_cmdline"
+default_uki="/efi/EFI/Linux/default-linux.efi"
+default_options="--cmdline /etc/kernel/arch_cmdline"
 
 
-#default_config="/etc/mkinitcpio.conf"
-#default_image="/boot/initramfs-linux.img"
-gpupasstrough_uki="/efi/EFI/Linux/gpupasstrough-linux.efi"
-gpupasstrough_options="--cmdline /etc/kernel/arch_gpupasstrough_cmdline"' | tee /etc/mkinitcpio.d/linux.preset
+#fallback_config="/etc/mkinitcpio.conf"
+#fallback_image="/boot/initramfs-linux.img"
+fallback_uki="/efi/EFI/Linux/fallback-linux.efi"
+fallback_options="--cmdline /etc/kernel/arch_cmdline"' | tee /etc/mkinitcpio.d/linux.preset
 
 rm /boot/initramfs-*.img
 
