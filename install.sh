@@ -109,7 +109,7 @@ elif [ "$nvme_count" -eq 1 ]; then
     
     # Partition single disk: EFI + Swap + Root
     sgdisk -Z "$disk1"
-    sgdisk --set-alignment=2048 --align-end -n 1:0:+2G -t 1:ef00 "$disk1"    # EFI partition
+    sgdisk --set-alignment=2048 --align-end -n 1:0:+1G -t 1:ef00 "$disk1"    # EFI partition
     sgdisk --set-alignment=2048 --align-end -n 2:0:0 -t 2:8304 "$disk1"      # Root partition
 
 	cryptsetup luksFormat -q \
@@ -132,7 +132,7 @@ elif [ "$nvme_count" -eq 1 ]; then
     # Mount filesystems
     mount /dev/mapper/root /mnt
     mount --mkdir -t vfat -o fmask=0077,dmask=0077,nodev,nosuid,noexec "${disk1}p1" /mnt/efi
-	mkswap -U clear --label swapfile --size 16G --file /mnt/swapfile
+	mkswap -U clear --label swapfile --size 8G --file /mnt/swapfile
     swapon /mnt/swapfile
 
 else
