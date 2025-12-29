@@ -39,17 +39,6 @@ do
     fi
 done
 
-#==============================================================================
-# Check if secureboot is enabled
-#==============================================================================
-
-if [ $(sudo sbctl status | grep "Setup Mode" | grep -c "Disabled") -gt 0 ] && [ $(sudo sbctl status | grep "Secure Boot" | grep -c "Enabled") -gt 0 ]; then
-	echo "Secure boot enabled and not in setup mode. Pass !"
-else
-	echo "Secure boot not enabled or in setup mode. Aborting !"
-	exit 1
-fi
-
 # Exit on any error, undefined variables, and pipe failures
 set -euo pipefail
 
@@ -140,63 +129,14 @@ sudo pacman -S mesa lib32-mesa mesa-utils intel-media-driver libva-utils libvpl 
     vulkan-mesa-implicit-layers lib32-vulkan-mesa-implicit-layers vulkan-tools --noconfirm
 pacmanerror=$((pacmanerror + $?))
 
-# Install NVIDIA graphics drivers
-echo "Installing NVIDIA graphics drivers..."
-sudo pacman -S nvidia-open nvidia-utils lib32-nvidia-utils nvidia-settings libxnvctrl --noconfirm
-pacmanerror=$((pacmanerror + $?))
-
-echo '# Enable runtime PM for NVIDIA VGA/3D controller devices on adding device
-ACTION=="add", SUBSYSTEM=="pci", ATTR{vendor}=="0x10de", ATTR{class}=="0x030000", TEST=="power/control", ATTR{power/control}="auto"
-ACTION=="add", SUBSYSTEM=="pci", ATTR{vendor}=="0x10de", ATTR{class}=="0x030200", TEST=="power/control", ATTR{power/control}="auto"
-
-# Enable runtime PM for NVIDIA VGA/3D controller devices on driver bind
-ACTION=="bind", SUBSYSTEM=="pci", ATTR{vendor}=="0x10de", ATTR{class}=="0x030000", TEST=="power/control", ATTR{power/control}="auto"
-ACTION=="bind", SUBSYSTEM=="pci", ATTR{vendor}=="0x10de", ATTR{class}=="0x030200", TEST=="power/control", ATTR{power/control}="auto"
-
-# Disable runtime PM for NVIDIA VGA/3D controller devices on driver unbind
-ACTION=="unbind", SUBSYSTEM=="pci", ATTR{vendor}=="0x10de", ATTR{class}=="0x030000", TEST=="power/control", ATTR{power/control}="on"
-ACTION=="unbind", SUBSYSTEM=="pci", ATTR{vendor}=="0x10de", ATTR{class}=="0x030200", TEST=="power/control", ATTR{power/control}="on"' | sudo tee /etc/udev/rules.d/90-prime-powermanagement.rules
-
-echo 'options nvidia "NVreg_DynamicPowerManagement=0x03" NVreg_UsePageAttributeTable=1' | sudo tee /etc/modprobe.d/80-nvidia.conf
-
-sudo mkinitcpio-editor -a nvidia nvidia_modeset nvidia_uvm nvidia_drm
-
-sudo tee /etc/pacman.d/hooks/nvidia.hook << 'EOF'
-[Trigger]
-Operation=Install
-Operation=Upgrade
-Operation=Remove
-Type=Package
-# You can remove package(s) that don't apply to your config, e.g. if you only use nvidia-open you can remove nvidia-lts as a Target
-Target=nvidia
-Target=nvidia-open
-# If running a different kernel, modify below to match
-Target=linux
-
-[Action]
-Description=Updating NVIDIA module in initcpio
-Depends=mkinitcpio
-When=PostTransaction
-NeedsTargets
-Exec=/bin/sh -c 'while read -r trg; do case $trg in linux*) exit 0; esac; done; /usr/bin/mkinitcpio -P'
-EOF
-
-sudo systemctl enable nvidia-powerd.service
-
 # Add OpenCL Support
 
-sudo pacman -S clinfo opencl-nvidia lib32-opencl-nvidia cuda intel-compute-runtime ocl-icd opencl-headers --noconfirm
+sudo pacman -S clinfo ocl-icd opencl-headers --noconfirm
 pacmanerror=$((pacmanerror + $?))
-yay -S  ncurses5-compat-libs --noconfirm
+yay -S intel-compute-runtime-legacy --noconfirm
 yayerror=$((yayerror + $?))
 
 echo "/usr/lib" | sudo tee /etc/ld.so.conf.d/00-usrlib.conf
-
-# Add custom prime-run command (with opencl support redirection)
-
-echo '#!/bin/bash
-exec env OCL_ICD_FILENAMES=nvidia.icd:intel.icd __NV_PRIME_RENDER_OFFLOAD=1 __EGL_VENDOR_LIBRARY_FILENAMES=/usr/share/glvnd/egl_vendor.d/10_nvidia.json MESA_VK_DEVICE_SELECT=10de:27a0 __GLX_VENDOR_LIBRARY_NAME=nvidia __VK_LAYER_NV_optimus=NVIDIA_only "$@"' | sudo tee /usr/local/bin/prime-run
-sudo chmod 755 /usr/local/bin/prime-run
 
 # Dbus
 
@@ -235,7 +175,7 @@ sudo systemctl enable cups.socket
 # GNOME desktop environment
 sudo pacman -S dmidecode gnome gnome-tweaks gnome-shell-extensions \
     xdg-desktop-portal xdg-desktop-portal-gnome power-profiles-daemon \
-    gnome-themes-extra fwupd --noconfirm
+    gnome-themes-extra --noconfirm
 pacmanerror=$((pacmanerror + $?))
 yay -S reversal-icon-theme-git --noconfirm
 yayerror=$((yayerror + $?))
@@ -245,17 +185,6 @@ sudo sed -i -E 's/^(session[[:space:]]+optional[[:space:]]+pam_gnome_keyring\.so
 
 sudo systemctl enable gdm.service
 
-#MSI-EC
-yay -S msi-ec-dkms-git --noconfirm
-yayerror=$((yayerror + $?))
-
-echo "msi-ec" | sudo tee /etc/modules-load.d/msi-ec.conf
-
-#Gnome-randr
-yay -S gnome-randr-rust --noconfirm
-yayerror=$((yayerror + $?))
-
-
 #acpid
 sudo pacman -S acpid --noconfirm
 pacmanerror=$((pacmanerror + $?))
@@ -263,25 +192,6 @@ sudo cp -r /archinstall/SCRIPT/ACPID/* /etc/acpi
 sudo chmod +x /etc/acpi/handler.sh
 sudo chmod +x /etc/acpi/SCRIPT/*
 sudo systemctl enable --now acpid.service
-
-# QEMU/KVM virtualization
-echo "softdep nvidia pre: vfio-pci" | sudo tee /etc/modprobe.d/30-vfio.conf
-sudo pacman -S qemu-full qemu-img libvirt virt-install virt-manager virt-viewer \
-    edk2-ovmf dnsmasq swtpm guestfs-tools libosinfo --noconfirm
-pacmanerror=$((pacmanerror + $?))
-sudo mkinitcpio-editor -a kvm kvm_intel virtio virtio_blk virtio_pci virtio_net vfio vfio_iommu_type1 vfio_pci
-sudo systemctl enable libvirtd.service
-echo "options kvm_intel nested=1" | sudo tee /etc/modprobe.d/20-kvm-intel.conf
-sudo usermod -aG kvm "$USER"
-sudo usermod -aG libvirt "$USER"
-echo 'export LIBVIRT_DEFAULT_URI="qemu:///system"' >> ~/.bashrc
-echo 'export LIBVIRT_DEFAULT_URI="qemu:///system"' >> ~/.zshrc 
-sudo setfacl -R -b /var/lib/libvirt/images/
-sudo setfacl -R -m "u:${USER}:rwX" /var/lib/libvirt/images/
-sudo setfacl -m "d:u:${USER}:rwx" /var/lib/libvirt/images/
-
-sudo cat /archinstall/CONFIG/createatlasos11vm | sudo tee /usr/local/bin/createatlasos11vm > /dev/null
-sudo chmod +x /usr/local/bin/createatlasos11vm
 
 # Fix keyboard layout
 sudo localectl set-x11-keymap fr
@@ -320,8 +230,8 @@ sudo systemctl enable fstrim.timer
 
 
 # Essential applications
-sudo pacman -S gparted speech-dispatcher libreoffice-still-fr file-roller zip unzip p7zip ttf-dejavu kdenlive obs-studio cdrkit \
-    unrar python-pip tk gimp inkscape bolt hunspell-fr noto-fonts-emoji blender ttf-fira-code ttf-liberation lib32-fontconfig qbittorrent --noconfirm
+sudo pacman -S gparted speech-dispatcher libreoffice-still-fr file-roller zip unzip p7zip ttf-dejavu cdrkit \
+    unrar python-pip tk gimp inkscape bolt hunspell-fr noto-fonts-emoji ttf-fira-code ttf-liberation lib32-fontconfig --noconfirm
 pacmanerror=$((pacmanerror + $?))
 yay -S vscodium-bin --noconfirm
 yayerror=$((yayerror + $?))
@@ -338,10 +248,6 @@ echo 'export PATH="$PATH:/home/mux/.local/bin"' >> ~/.zshrc
 # Android file system support (grouped)
 sudo pacman -S mtpfs gvfs-mtp gvfs-gphoto2 libmtp --noconfirm
 pacmanerror=$((pacmanerror + $?))
-
-# Android Studio
-yay -S android-studio --noconfirm
-yayerror=$((yayerror + $?))
 
 # Disable coredump
 
@@ -403,81 +309,17 @@ Exec=sudo /usr/local/bin/power-detect
 Terminal=false
 Type=Application" | sudo tee /etc/xdg/autostart/power-detect.desktop
 
-# Nvidia overclock on boot
-
-yay -S python-nvidia-ml-py  --noconfirm
-yayerror=$((yayerror + $?))
-
-
-echo '#!/usr/bin/env python
-
-from pynvml import *
-
-nvmlInit()
-
-# This sets the GPU to adjust - if this gives you errors or you have multiple GPUs, set to 1 or try other values
-myGPU = nvmlDeviceGetHandleByIndex(0)
-
-nvmlDeviceSetGpuLockedClocks(myGPU, 210, 2640)
-
-# The GPU clock offset value should replace "000" in the line below.
-nvmlDeviceSetGpcClkVfOffset(myGPU, 220)
-
-# The memory clock offset should be **multiplied by 2** to replace the "000" below
-# For example, an offset of 500 means inserting a value of 1000 in the next line
-nvmlDeviceSetMemClkVfOffset(myGPU, 1200)
-' | sudo tee /usr/local/bin/nvidia-oc.py
-sudo chmod +x /usr/local/bin/nvidia-oc.py
-
-echo "[Unit]
-Description=Set up Nvidia settings
-Wants=basic.target
-
-[Service]
-Type=oneshot
-ExecStart=/usr/local/bin/nvidia-oc.py
-
-
-[Install]
-WantedBy=network.target" | sudo tee /etc/systemd/system/nvidia-oc.service
-
-sudo systemctl enable nvidia-oc.service 
-
-# /data permission
-if [ -d /data ]; then
-    sudo groupadd datausers
-    sudo usermod -aG datausers "$USER"
-    sudo chown root:datausers /data
-    sudo chmod 775 /data
-    sudo chmod g+s /data
-    sudo mkdir /data/qbittorrent
-    sudo chown root:datausers /data/qbittorrent
-    sudo chmod 775 /data/qbittorrent
-    sudo chmod g+s /data/qbittorrent
-    sudo mkdir /data/libvirt_images
-    sudo setfacl -R -b /data/libvirt_images
-    sudo setfacl -R -m "u:${USER}:rwX" /data/libvirt_images
-    sudo setfacl -m "d:u:${USER}:rwx" /data/libvirt_images
-    ln -s /data/qbittorrent ~/SSD-qBittorrent
-    sudo ln -s /data/libvirt_images /var/lib/libvirt/secondssd_images
-fi
-
-
 # Wayland support enable 
 
 yay -S qt5-wayland qt6-wayland libdecor --noconfirm
 yayerror=$((yayerror + $?))
 
-echo 'LIBVIRT_DEFAULT_URI="qemu:///system"
-MOZ_ENABLE_WAYLAND=1
+echo 'MOZ_ENABLE_WAYLAND=1
 QT_QPA_PLATFORM="wayland;xcb"
 CLUTTER_BACKEND=wayland
 SDL_VIDEODRIVER="wayland,x11"
 XDG_SESSION_TYPE=wayland
-MESA_VK_DEVICE_SELECT=8086:a78b
-GSK_RENDERER=ngl
 SUDO_EDITOR=nano
-OCL_ICD_FILENAMES=intel.icd:nvidia.icd
 __EGL_VENDOR_LIBRARY_FILENAMES=/usr/share/glvnd/egl_vendor.d/50_mesa.json
 __GLX_VENDOR_LIBRARY_NAME=mesa' | sudo tee -a /etc/environment
 
@@ -512,49 +354,6 @@ echo '<driconf>
 </driconf>' | sudo tee /etc/drirc
 
 echo "vm.max_map_count = 2147483642" | sudo tee /etc/sysctl.d/80-gamecompatibility.conf
-
-# Looking-glass
-cd /tmp || exit 1
-curl --connect-timeout 10 --retry 10 --retry-delay 10 https://looking-glass.io/artifact/B7/source --output lookinglass.tar.xz
-tar -xf lookinglass.tar.xz
-cd /tmp/looking-glass-B7 || exit 1
-mkdir client/build
-cd client/build || exit 1
-cmake -DENABLE_X11=no -DENABLE_LIBDECOR=ON ../
-sudo make install
-cd /tmp/looking-glass-B7/module/ || exit 1
-sudo dkms install "."
-echo "options kvmfr static_size_mb=64" | sudo tee /etc/modprobe.d/90-kvmfr.conf
-echo "kvmfr" | sudo tee /etc/modules-load.d/kvmfr.conf
-echo "SUBSYSTEM==\"kvmfr\", GROUP=\"kvm\", MODE=\"0660\"" | sudo tee /etc/udev/rules.d/99-kvmfr.rules
-echo 'cgroup_device_acl = [
-    "/dev/null", "/dev/full", "/dev/zero",
-    "/dev/random", "/dev/urandom",
-    "/dev/ptmx", "/dev/kvm",
-    "/dev/userfaultfd", "/dev/kvmfr0"
-]' | sudo tee -a /etc/libvirt/qemu.conf
-echo "user = \"$(whoami)\"" | sudo tee -a /etc/libvirt/qemu.conf
-
-#OBS Plugin Installation
-cd /tmp/looking-glass-B7 || exit 1
-mkdir obs/build
-cd obs/build  || exit 1
-cmake -DUSER_INSTALL=1 ../
-make install
-
-echo '[input]
-captureOnFocus=yes
-escapeKey=KEY_RIGHTSHIFT
-rawMouse=yes
-
-[spice]
-clipboard=yes' | sudo tee /etc/looking-glass-client.ini
-
-# Script Transparent Huge Page
-
-sudo mkdir /etc/libvirt/hooks
-sudo cat /archinstall/CONFIG/qemu | sudo tee /etc/libvirt/hooks/qemu > /dev/null
-sudo chmod +x /etc/libvirt/hooks/qemu
 
 #Fix Upower
 sudo sed -i 's/^CriticalPowerAction=.*$/CriticalPowerAction=PowerOff/' /etc/UPower/UPower.conf
