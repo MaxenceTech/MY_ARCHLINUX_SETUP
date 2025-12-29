@@ -27,9 +27,6 @@ echo performance | tee /sys/devices/system/cpu/cpu*/cpufreq/scaling_governor
 echo performance | tee /sys/devices/system/cpu/cpu*/cpufreq/energy_performance_preference
 echo 0 | tee /sys/devices/system/cpu/cpu*/power/energy_perf_bias
 
-# Configure display for high refresh rate
-runuser -l "$(last | cut -f 1 -d " " | sed '1p;d')" -c 'gnome-randr modify $(gnome-randr | grep "eDP" | cut -f 1 -d " "  | sed -n '2p') --mode 2560x1600@240.014'
-
 # Restore saved brightness if available
 if [ -f /tmp/brightness-saved ]; then
     tee /sys/class/backlight/intel_backlight/brightness < /tmp/brightness-saved
