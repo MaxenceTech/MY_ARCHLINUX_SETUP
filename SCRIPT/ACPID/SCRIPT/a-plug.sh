@@ -18,10 +18,6 @@ sleep 5
 #Enable turno boost
 echo 0 | tee /sys/devices/system/cpu/intel_pstate/no_turbo
 
-# Configure MSI-EC for performance mode
-echo turbo | tee /sys/devices/platform/msi-ec/shift_mode
-echo auto | tee /sys/devices/platform/msi-ec/fan_mode
-
 # Set CPU governors to performance mode
 echo performance | tee /sys/devices/system/cpu/cpu*/cpufreq/scaling_governor
 echo performance | tee /sys/devices/system/cpu/cpu*/cpufreq/energy_performance_preference
