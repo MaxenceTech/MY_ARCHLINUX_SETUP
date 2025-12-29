@@ -129,15 +129,6 @@ sudo pacman -S mesa lib32-mesa mesa-utils intel-media-driver libva-utils libvpl 
     vulkan-mesa-implicit-layers lib32-vulkan-mesa-implicit-layers vulkan-tools --noconfirm
 pacmanerror=$((pacmanerror + $?))
 
-# Add OpenCL Support
-
-sudo pacman -S clinfo ocl-icd opencl-headers --noconfirm
-pacmanerror=$((pacmanerror + $?))
-yay -S intel-compute-runtime-legacy --noconfirm
-yayerror=$((yayerror + $?))
-
-echo "/usr/lib" | sudo tee /etc/ld.so.conf.d/00-usrlib.conf
-
 # Dbus
 
 sudo pacman -S dbus --noconfirm
