@@ -129,6 +129,8 @@ sudo pacman -S mesa lib32-mesa mesa-utils intel-media-driver libva-utils libvpl 
     vulkan-mesa-implicit-layers lib32-vulkan-mesa-implicit-layers vulkan-tools --noconfirm
 pacmanerror=$((pacmanerror + $?))
 
+echo "options i915 enable_guc=3" | sudo tee /etc/modprobe.d/i915.conf
+
 # Dbus
 
 sudo pacman -S dbus --noconfirm
