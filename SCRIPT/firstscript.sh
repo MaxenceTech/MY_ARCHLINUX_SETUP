@@ -152,7 +152,7 @@ PARTUUIDGREP=$(cryptsetup luksUUID -- "$luks_dev")
 
 # Create boot entries for different configurations
 
-echo "rd.luks.options=discard,no-read-workqueue,no-write-workqueue rd.luks.name=$PARTUUIDGREP=root root=/dev/mapper/root rw quiet mitigations=auto,nosmt nowatchdog tsc=reliable clocksource=tsc intel_iommu=on iommu=pt vt.global_cursor_default=0 zswap.enabled=1 zswap.shrinker_enabled=1 zswap.compressor=lz4 zswap.max_pool_percent=50 zswap.zpool=zsmalloc" | tee /etc/kernel/arch_cmdline
+echo "rd.luks.options=discard,no-read-workqueue,no-write-workqueue rd.luks.name=$PARTUUIDGREP=root root=/dev/mapper/root rw quiet mitigations=auto,nosmt nowatchdog tsc=reliable clocksource=tsc intel_iommu=on iommu=pt vt.global_cursor_default=0 zswap.enabled=1 zswap.shrinker_enabled=1 zswap.compressor=lz4 zswap.max_pool_percent=25 zswap.zpool=zsmalloc" | tee /etc/kernel/arch_cmdline
 echo 'ALL_config="/etc/mkinitcpio.conf"
 ALL_kver="/boot/vmlinuz-linux"
 
