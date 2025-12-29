@@ -129,7 +129,8 @@ vm.dirty_background_ratio = 5
 vm.vfs_cache_pressure=50" | tee /etc/sysctl.d/99-ramtweaks.conf
 
 # Blacklist Watchdogs module
-echo "blacklist iTCO_wdt" | tee /etc/modprobe.d/blacklist_intelwatchdog.conf
+echo "blacklist iTCO_wdt
+blacklist intel_oc_wdt" | tee /etc/modprobe.d/blacklist_intelwatchdog.conf
 
 #==============================================================================
 # BOOTLOADER CONFIGURATION
