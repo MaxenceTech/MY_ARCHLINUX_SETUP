@@ -9,6 +9,13 @@
 # Usage: Called automatically by ACPI handler when adapter is unplugged
 #==============================================================================
 
+
+# Set power profile to performance mode
+powerprofilesctl set performance
+
+# Wait for system to stabilize
+sleep 5
+
 #Enable turno boost
 echo 0 | tee /sys/devices/system/cpu/intel_pstate/no_turbo
 
@@ -16,9 +23,3 @@ echo 0 | tee /sys/devices/system/cpu/intel_pstate/no_turbo
 echo performance | tee /sys/devices/system/cpu/cpu*/cpufreq/scaling_governor
 echo balance_performance | tee /sys/devices/system/cpu/cpu*/cpufreq/energy_performance_preference
 echo 4 | tee /sys/devices/system/cpu/cpu*/power/energy_perf_bias
-
-# Wait for system to stabilize
-sleep 5
-
-# Set power profile to power saver mode
-powerprofilesctl set balanced
