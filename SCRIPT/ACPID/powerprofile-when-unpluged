@@ -17,10 +17,6 @@ echo powersave | tee /sys/devices/system/cpu/cpu*/cpufreq/scaling_governor
 echo power | tee /sys/devices/system/cpu/cpu*/cpufreq/energy_performance_preference
 echo 15 | tee /sys/devices/system/cpu/cpu*/power/energy_perf_bias
 
-# Save current brightness and reduce it for battery conservation
-tee /tmp/brightness-saved < /sys/class/backlight/intel_backlight/brightness
-echo 22000 | tee /sys/class/backlight/intel_backlight/brightness
-
 # Wait for system to stabilize
 sleep 5
 
