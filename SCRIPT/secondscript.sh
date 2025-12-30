@@ -220,7 +220,7 @@ sudo systemctl enable fstrim.timer
 
 
 # Essential applications
-sudo pacman -S gparted speech-dispatcher libreoffice-still-fr file-roller zip unzip p7zip ttf-dejavu cdrkit \
+sudo pacman -S gparted speech-dispatcher libreoffice-still-fr file-roller zip unzip p7zip ttf-dejavu cdrkit seahorse \
     unrar python-pip tk gimp inkscape bolt hunspell-fr noto-fonts-emoji ttf-fira-code ttf-liberation lib32-fontconfig --noconfirm
 pacmanerror=$((pacmanerror + $?))
 yay -S vscodium-bin --noconfirm
