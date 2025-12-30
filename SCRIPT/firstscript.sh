@@ -123,7 +123,7 @@ sed -i "$((ligne-1)) a HOOKS=(systemd autodetect microcode modconf keyboard sd-v
 
 # Configure system performance parameters
 echo "Applying system performance tweaks..."
-echo "vm.swappiness=20
+echo "vm.swappiness=30
 vm.dirty_ratio = 10
 vm.dirty_background_ratio = 5
 vm.vfs_cache_pressure=50" | tee /etc/sysctl.d/99-ramtweaks.conf
