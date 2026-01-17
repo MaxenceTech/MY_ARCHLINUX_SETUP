@@ -1,213 +1,299 @@
 #!/bin/bash
 
 #==============================================================================
-# First Configuration Script (Chroot Environment)
+# Arch Linux Installation Script
 #==============================================================================
-# Description: Initial system configuration executed in chroot environment
-#              Configures locale, users, bootloader, and basic system settings
+# Description: Main installation script for setting up Arch Linux with 
+#              automated partitioning, package installation, and chroot setup
 # Author: MaxenceTech
-# Usage: Executed automatically by install.sh via arch-chroot
-# Environment: Runs inside chroot (/mnt from installation script)
+# Usage: Run this script from Arch Linux live environment
+# Prerequisites: Active internet connection, booted from Arch Linux ISO
 #==============================================================================
 
-# Exit on any error, undefined variables, and pipe failures  
+# Exit on any error, undefined variables, and pipe failures
 set -euo pipefail
 
-#==============================================================================
-# PACKAGE INSTALLATION TRACKING
-#==============================================================================
+# Set French keyboard layout
+loadkeys fr-pc
+mount -o remount,size=2G /run/archiso/cowspace
 
-# Initialize error tracking for package installations
-pacmanerror=0
-
-#==============================================================================
-# SYSTEM UPDATE AND BASE PACKAGES
-#==============================================================================
-
-# Update package database and system
-echo "Updating system packages..."
-pacman -Syu --noconfirm
-pacmanerror=$((pacmanerror + $?))
-
-mkdir /etc/pacman.d/hooks
-
-# Install essential system packages
-echo "Installing base development and networking packages..."
-pacman -S sbctl nano base-devel openssh networkmanager wpa_supplicant wireless_tools \
-    netctl dialog iputils man git --noconfirm
-pacmanerror=$((pacmanerror + $?))
-
-#==============================================================================
-# NETWORK CONFIGURATION
-#==============================================================================
-
-# Enable NetworkManager for network management
-systemctl enable NetworkManager
-
-#==============================================================================
-# SYSTEM UTILITIES SETUP
-#==============================================================================
-
-# Install custom mkinitcpio editor utility
-mv /archinstall/SCRIPT/mkinitcpio-editor.sh /usr/local/bin/mkinitcpio-editor
-chmod +x /usr/local/bin/mkinitcpio-editor
-
-#==============================================================================
-# LOCALE AND KEYBOARD CONFIGURATION
-#==============================================================================
-
-# Configure French locale
-echo "Configuring system locale..."
-sed -i 's/^#\(fr_FR.UTF-8\s*UTF-8\)/\1/' /etc/locale.gen
-locale-gen
-echo "LANG=fr_FR.UTF-8" > /etc/locale.conf
-echo "KEYMAP=fr-pc" > /etc/vconsole.conf
-
-#==============================================================================
-# USER ACCOUNT CONFIGURATION
-#==============================================================================
-
-set +euo pipefail
-
-# Configure root password with retry loop
-echo "Mot de passe root :"
-x=10
-while [ $x != 0 ]
-do
-    passwd
-    x=$?
+while :; do
+  read -p "The script will erase all yours NVME drives. Do you want to continue ? (y/n) " yn
+	case $yn in 
+		y | Y) echo ok, we will proceed;
+      		break;;
+		n | N) read -r -p "Exit. Press any key to continue...";
+      		exit 1;;
+		*) read -r -p "Invalid answer. Press any key to continue...";;
+	esac
 done
 
-# Create user account with validation
-echo "Nom d'utisateur :"
+#==============================================================================
+# NETWORK CONNECTIVITY SETUP
+#==============================================================================
+
+# Initial network connectivity check
 x=10
+if ping -c 5 google.com; then
+    x=0
+fi
+
+# WiFi connection loop with error handling
 while [ $x != 0 ]
 do
-    read -r nomutilisateur
-    # Basic username validation (alphanumeric, underscore, hyphen only)
-    if [[ "$nomutilisateur" =~ ^[a-zA-Z0-9_-]+$ ]] && [ ${#nomutilisateur} -ge 3 ] && [ ${#nomutilisateur} -le 32 ]; then
-        useradd -m -g users -G wheel "$nomutilisateur"
-        x=$?
-    else
-        echo "Invalid username. Use 3-32 characters (letters, numbers, underscore, hyphen only)."
-        x=1
+    echo "Scanning for WiFi networks..."
+    iwctl station wlan0 scan
+    iwctl station wlan0 get-networks
+    echo -e "\n\n\n\nSSID :"
+    read -r SSID
+    echo "Password :"
+    read -r PASSWORD
+    
+    # Attempt WiFi connection
+    iwctl station wlan0 connect "$SSID" --passphrase="$PASSWORD"
+    t=$?
+    sleep 10
+    
+    # Test internet connectivity
+    ping -c 5 google.com 
+    x=$?
+    
+    # Provide feedback on connection status
+    if [ $t != 0 ]; then
+        echo -e "\n\n\nNot connected !\n\n\n"
+    elif [ $x != 0 ]; then
+        echo -e "\n\n\nConnected but no network !\n\n\n"
     fi
 done
 
-# Set user password with retry loop
-echo "Mot de passe utiliateur :"
-x=10
-while [ $x != 0 ]
-do
-    passwd "$nomutilisateur"
-    x=$?
+#==============================================================================
+# CLEANUP AND PREPARATION
+#==============================================================================
+
+# Cleanup any existing mounts (ignore errors if not mounted)
+
+for mount in $(mount | grep '/dev/nvme' | cut -d' ' -f1); do
+  echo "Unmounting $mount"
+  umount $mount 2>/dev/null || true
 done
 
-set -euo pipefail
+for swap in $(cat /proc/swaps | grep '/dev/nvme' | cut -d' ' -f1); do
+  echo "Disabling swap on $swap"
+  swapoff $swap 2>/dev/null || true
+done
 
-# Enable sudo access for wheel group
-sed -i 's/^#\s*\(%wheel\s*ALL=(ALL:ALL)\s*ALL\)/\1/' /etc/sudoers
+for disk in /dev/nvme*n1; do
+  echo "Wipe $disk..."
+  wipefs -af "$disk"
+done
 
-#==============================================================================
-# ACPI CONFIGURATION
-#==============================================================================
 
-# Fix ACPI error with custom SSDT
-echo "Configuring ACPI override..."
-mkdir -p /etc/initcpio/acpi_override
-cp /archinstall/CONFIG/ssdt1.aml /etc/initcpio/acpi_override
-cp /archinstall/CONFIG/ssdt12.aml /etc/initcpio/acpi_override
+sleep 20
 
 #==============================================================================
-# KERNEL CONFIGURATION
+# DISK PARTITIONING AND FILESYSTEM SETUP
 #==============================================================================
 
-# Update mkinitcpio hooks for ACPI support
-echo "Updating mkinitcpio configuration..."
-hooksvar=$(grep -v  -n "^#" /etc/mkinitcpio.conf | grep 'HOOKS=')
-ligne="${hooksvar%:*}"
-sed -i "$((ligne)) d" /etc/mkinitcpio.conf
-sed -i "$((ligne-1)) a HOOKS=(systemd autodetect microcode modconf keyboard sd-vconsole block sd-encrypt filesystems fsck acpi_override)" /etc/mkinitcpio.conf
+lsblk -d -o NAME,MODEL,SIZE,TYPE | grep nvme
 
-#==============================================================================
-# SYSTEM PERFORMANCE TWEAKS
-#==============================================================================
+# Discover NVMe disks
+mapfile -t nvme_disks < <(ls /dev/nvme*n1 2>/dev/null)
+nvme_count=${#nvme_disks[@]}
 
-# Configure system performance parameters
-echo "Applying system performance tweaks..."
-echo "vm.swappiness=10
-vm.dirty_bytes = 4294967296
-vm.dirty_background_bytes = 2147483648
-vm.vfs_cache_pressure=50" | tee /etc/sysctl.d/99-ramtweaks.conf
+if [ "$nvme_count" -eq 0 ]; then
+    echo "No NVMe disks found on this system. Exit"
+    exit 1
+elif [ "$nvme_count" -eq 1 ]; then
+    # Single NVMe disk configuration
+    disk1="${nvme_disks[0]}"
+    echo "Single NVMe disk detected: $disk1"
+    
+    # Partition single disk: EFI + Swap + Root
+    sgdisk -Z "$disk1"
+    sgdisk --set-alignment=2048 --align-end -n 1:0:+2G -t 1:ef00 "$disk1"    # EFI partition
+    sgdisk --set-alignment=2048 --align-end -n 2:0:0 -t 2:8304 "$disk1"      # Root partition
 
-# Blacklist Watchdogs module
-echo "blacklist iTCO_wdt" | tee /etc/modprobe.d/blacklist_intelwatchdog.conf
+	cryptsetup luksFormat -q \
+	    --type=luks2 \
+	    --cipher=aes-xts-plain64 \
+	    --key-size=512 \
+	    --pbkdf=argon2id \
+	    --iter-time=4000 \
+		--verify-passphrase \
+	    --label=encrypted_root \
+	    --pbkdf-memory=2097152 \
+	    --pbkdf-parallel=4 \
+	    "${disk1}p2"
+	cryptsetup --perf-no_read_workqueue --perf-no_write_workqueue --allow-discards --persistent open "${disk1}p2" root
+ 
+    # Create filesystems
+    mkfs.fat -F32 "${disk1}p1"
+    mkfs.ext4 /dev/mapper/root
 
-#==============================================================================
-# BOOTLOADER CONFIGURATION
-#==============================================================================
+    # Mount filesystems
+    mount /dev/mapper/root /mnt
+    mount --mkdir -t vfat -o fmask=0077,dmask=0077,nodev,nosuid,noexec "${disk1}p1" /mnt/efi
+	mkswap -U clear --label swapfile --size 16G --file /mnt/swapfile
+    swapon /mnt/swapfile
 
-# Configure custom kernel modules and microcode
-echo "Configuring bootloader..."
-mkinitcpio-editor -a xe lz4
-pacman -S efibootmgr intel-ucode --noconfirm
-pacmanerror=$((pacmanerror + $?))
+elif [ "$nvme_count" -eq 2 ]; then
+    # Dual NVMe disk configuration
+    echo "Two NVMe disks detected:"
+    for i in "${!nvme_disks[@]}"; do
+        echo "$((i+1)). ${nvme_disks[i]}"
+    done
+    
+    # User disk selection with validation
+    while true; do
+        read -r -p "Which disk do you want to select as the primary disk? (1 or 2): " choice
+        case $choice in
+            1)
+                disk1="${nvme_disks[0]}"
+                disk2="${nvme_disks[1]}"
+                break
+                ;;
+            2)
+                disk1="${nvme_disks[1]}"
+                disk2="${nvme_disks[0]}"
+                break
+                ;;
+            *)
+                echo "Invalid choice. Please enter 1 or 2."
+                ;;
+        esac
+    done
+    
+    echo "Primary disk (disk1): $disk1"
+    echo "Secondary disk (disk2): $disk2"
 
-# Get root partition UUID for bootloader configuration
-luks_dev=$(LC_ALL=C cryptsetup status root | awk -F': ' '/device:/ {print $2}')
-# Trim leading
-luks_dev="${luks_dev#"${luks_dev%%[![:space:]]*}"}"
-# Trim trailing
-luks_dev="${luks_dev%"${luks_dev##*[![:space:]]}"}"
+    # Clear partition tables
+    sgdisk -Z "$disk1"
 
-PARTUUIDGREP=$(cryptsetup luksUUID -- "$luks_dev")
+    # Partition primary disk: EFI + Root
+    sgdisk --set-alignment=2048 --align-end -n 1:0:+2G -t 1:ef00 "$disk1"       # EFI partition
+    sgdisk --set-alignment=2048 --align-end -n 2:0:0 -t 2:8304 "$disk1"        # Root partition
 
-# Create boot entries for different configurations
+	cryptsetup luksFormat -q \
+	    --type=luks2 \
+	    --cipher=aes-xts-plain64 \
+	    --key-size=512 \
+	    --pbkdf=argon2id \
+	    --iter-time=4000 \
+		--verify-passphrase \
+	    --label=encrypted_root \
+	    --pbkdf-memory=2097152 \
+	    --pbkdf-parallel=4 \
+	    "${disk1}p2"
+	cryptsetup --perf-no_read_workqueue --perf-no_write_workqueue --allow-discards --persistent open "${disk1}p2" root
+	
+    mkfs.fat -F32 "${disk1}p1"
+    mkfs.ext4 /dev/mapper/root
 
-echo "rd.luks.options=discard,no-read-workqueue,no-write-workqueue rd.luks.name=$PARTUUIDGREP=root root=/dev/mapper/root rw quiet mitigations=auto nowatchdog tsc=reliable clocksource=tsc intel_iommu=on iommu=pt vt.global_cursor_default=0 zswap.enabled=1 zswap.shrinker_enabled=1 zswap.compressor=lz4 zswap.max_pool_percent=20 zswap.zpool=zsmalloc modprobe.blacklist=kvmfr video=HDMI-A-1:d video=DP-1:d video=DP-2:d" | tee /etc/kernel/arch_cmdline
-echo "rd.luks.options=discard,no-read-workqueue,no-write-workqueue rd.luks.name=$PARTUUIDGREP=root root=/dev/mapper/root rw quiet mitigations=auto nowatchdog tsc=reliable clocksource=tsc intel_iommu=on iommu=pt vfio-pci.ids=10de:27a0,10de:22bc vt.global_cursor_default=0 zswap.enabled=1 zswap.shrinker_enabled=1 zswap.compressor=lz4 zswap.max_pool_percent=20 zswap.zpool=zsmalloc" | tee /etc/kernel/arch_gpupasstrough_cmdline
+    # Mount all filesystems
+    mount /dev/mapper/root /mnt
+    mount --mkdir -t vfat -o fmask=0077,dmask=0077,nodev,nosuid,noexec "${disk1}p1" /mnt/efi
+	mkswap -U clear --label swapfile --size 16G --file /mnt/swapfile
+    swapon /mnt/swapfile
 
-echo 'ALL_config="/etc/mkinitcpio.conf"
-ALL_kver="/boot/vmlinuz-linux"
-
-PRESETS=('nvidia' 'gpupasstrough')
-
-#default_config="/etc/mkinitcpio.conf"
-#default_image="/boot/initramfs-linux.img"
-nvidia_uki="/efi/EFI/Linux/nvidia-linux.efi"
-nvidia_options="--cmdline /etc/kernel/arch_cmdline"
-
-
-#default_config="/etc/mkinitcpio.conf"
-#default_image="/boot/initramfs-linux.img"
-gpupasstrough_uki="/efi/EFI/Linux/gpupasstrough-linux.efi"
-gpupasstrough_options="--cmdline /etc/kernel/arch_gpupasstrough_cmdline"' | tee /etc/mkinitcpio.d/linux.preset
-
-rm /boot/initramfs-*.img
-
-# Install and configure systemd-boot
-bootctl install
-
-# Create bootloader configuration
-echo "default  @saved
-timeout  6
-console-mode max
-editor   no" | tee /efi/loader/loader.conf
-
-mkinitcpio -p linux
-
-# Update bootloader and enable automatic updates
-bootctl update || [[ $? -eq 1 ]]
-
-#==============================================================================
-# INSTALLATION SUMMARY
-#==============================================================================
-
-# Report installation status
-if [ "$pacmanerror" -eq 0 ]; then
-    echo "Every pacman installation occurred without error."
 else
-    echo "There was an error in one or more pacman installations."
+    # Unsupported disk configuration
+    echo "More than 2 NVMe disks detected. Found $nvme_count disks:"
+    for disk in "${nvme_disks[@]}"; do
+        echo "  $disk"
+    done
+    echo "This script only handles up to 2 NVMe disks. Exit"
+    exit 1
 fi
 
-read -r -p "First configuration script completed. Press any key to continue..."
+#==============================================================================
+# BASE SYSTEM INSTALLATION
+#==============================================================================
+
+pacstrap -K /mnt base linux linux-headers linux-firmware
+
+if [ "$?" -eq 0 ]; then
+    echo "pacstrap installation occurred without error."
+else
+    echo "pacstrap installation occurred with error."
+fi
+read -r -p "Press any key to continue..."
+
+#==============================================================================
+# SYSTEM CONFIGURATION PREPARATION
+#==============================================================================
+if [ "$nvme_count" -eq 2 ]; then
+    sgdisk -Z "$disk2"
+	dd bs=512 count=4 if=/dev/random iflag=fullblock | install -m 0600 /dev/stdin /mnt/etc/cryptsetup-keys.d/secondssd-keyfile.key
+	# Partition secondary disk: Swap + Data
+    sgdisk --set-alignment=2048 --align-end -n 1:0:0 -t 1:8300 "$disk2"        # Data partition
+
+	cryptsetup luksFormat -q \
+	    --type=luks2 \
+	    --cipher=aes-xts-plain64 \
+	    --key-size=512 \
+	    --pbkdf=argon2id \
+	    --iter-time=4000 \
+	    --label=encrypted_secondssd \
+	    --pbkdf-memory=2097152 \
+	    --pbkdf-parallel=4 \
+		--key-file=/mnt/etc/cryptsetup-keys.d/secondssd-keyfile.key  \
+		--keyfile-size=2048 \
+	    "${disk2}p1"
+    cryptsetup --perf-no_read_workqueue --perf-no_write_workqueue --allow-discards --persistent open "${disk2}p1" SECOND_SSD --key-file=/mnt/etc/cryptsetup-keys.d/secondssd-keyfile.key
+
+	data_luks_dev=$(LC_ALL=C cryptsetup status SECOND_SSD | awk -F': ' '/device:/ {print $2}')
+	# Trim leading
+	data_luks_dev="${data_luks_dev#"${data_luks_dev%%[![:space:]]*}"}"
+	# Trim trailing
+	data_luks_dev="${data_luks_dev%"${data_luks_dev##*[![:space:]]}"}"
+
+	DATAPARTUUIDGREP=$(cryptsetup luksUUID -- "$data_luks_dev")
+	
+    mkfs.ext4 /dev/mapper/SECOND_SSD
+	mount --mkdir -o nodev,nosuid /dev/mapper/SECOND_SSD /mnt/data
+
+	echo "SECOND_SSD UUID=$DATAPARTUUIDGREP /etc/cryptsetup-keys.d/secondssd-keyfile.key luks,discard,no-read-workqueue,no-write-workqueue" | tee -a /mnt/etc/crypttab
+fi
+# Generate filesystem table
+genfstab -U /mnt | tee -a  /mnt/etc/fstab
+
+if [ -d /mnt/data ]; then
+	perl -i.bak -pe 'if (/\/data/ && s/rw,/rw,nofail,/) { $found=1 } END { exit 1 unless $found }' /mnt/etc/fstab
+fi
+
+pacman -S python python-pip --noconfirm
+pip install gdown --break-system-packages
+gdown 1PwHXNjTkH2ivoqJDVbiy_nweyNrDZ0EQ
+
+read -r -p "Password for unzip fonts. Press any key to continue..."
+pacman -S 7zip --noconfirm
+7z x fonts.zip
+rm fonts.zip
+mkdir /mnt/usr/local/share/fonts
+mkdir /mnt/usr/local/share/fonts/WindowsFonts
+cp fonts/* /mnt/usr/local/share/fonts/WindowsFonts/
+
+rm -rf fonts
+
+
+# Copy installation files to target system
+mkdir /mnt/archinstall
+cp -r ./* /mnt/archinstall && chmod -R 755 /mnt/archinstall/SCRIPT/*
+
+# Copy pacman configuration to target system
+tee /mnt/etc/pacman.conf < CONFIG/pacman.conf
+
+#==============================================================================
+# CHROOT EXECUTION
+#==============================================================================
+
+# Execute first configuration script in chroot environment
+arch-chroot /mnt bash /archinstall/SCRIPT/firstscript.sh
+
+#==============================================================================
+# CLEANUP AND REBOOT
+#==============================================================================
+
+# Unmount all filesystems and reboot
+umount -a 2>/dev/null || true
+reboot
