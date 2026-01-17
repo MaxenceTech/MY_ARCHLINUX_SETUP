@@ -29,5 +29,5 @@ Les sorties de la carte graphique NVIDIA seront désactivées afin de pouvoir la
 
 # To-Do
 
-CPU Undervolt via intel-undervolt
-AppAmor config (optionnal)
+- CPU Undervolt via intel-undervolt
+- AppAmor config (optionnal)
