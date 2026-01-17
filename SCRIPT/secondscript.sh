@@ -318,7 +318,7 @@ sudo systemctl enable fstrim.timer
 
 # Essential applications
 sudo pacman -S gparted speech-dispatcher libreoffice-still-fr file-roller zip unzip p7zip ttf-dejavu kdenlive obs-studio cdrkit seahorse \
-    unrar python-pip tk gimp inkscape bolt hunspell-fr noto-fonts-emoji blender ttf-fira-code ttf-liberation lib32-fontconfig qbittorrent --noconfirm
+    unrar python-pip tk gimp inkscape bolt hunspell-fr noto-fonts-emoji blender ttf-fira-code qbittorrent --noconfirm
 pacmanerror=$((pacmanerror + $?))
 yay -S vscodium-bin --noconfirm
 yayerror=$((yayerror + $?))
@@ -381,10 +381,24 @@ echo '#!/bin/bash
 
 # Read the value from /sys/class/power_supply/ADP1/online
 online_status=$(cat /sys/class/power_supply/ADP1/online)
+gamemodeout="$(runuser -l "$(last | cut -f 1 -d " " | sed "1p;d")" -c "LANG=C gamemoded -s")"
+
+if echo "$gamemodeout" | grep -wiq "active"; then
+    gamemodestatus=1   # actif
+else   
+    gamemodestatus=0  # inactif
+fi
+
 
 # Check the value and run different scripts based on it
 if [ "$online_status" -eq 0 ]; then
-    exec /etc/acpi/SCRIPT/a-unplug.sh
+    if [ "$gamemodestatus" -eq 1 ] || [ "$1" = "-g" ]; then
+        # Run the script for when online status is 0 (unplugged) and in (or will be in) gamemode
+        exec /etc/acpi/SCRIPT/gamemode-unplug.sh
+    else
+        # Run the script for when online status is 0 (unplugged)
+        exec /etc/acpi/SCRIPT/a-unplug.sh
+    fi
 else
     # Run the script for when online status is 1 (plugged in)
     exec /etc/acpi/SCRIPT/a-plug.sh
@@ -476,7 +490,13 @@ GSK_RENDERER=ngl
 SUDO_EDITOR=nano
 OCL_ICD_FILENAMES=intel.icd:nvidia.icd
 __EGL_VENDOR_LIBRARY_FILENAMES=/usr/share/glvnd/egl_vendor.d/50_mesa.json
-__GLX_VENDOR_LIBRARY_NAME=mesa' | sudo tee -a /etc/environment
+__GLX_VENDOR_LIBRARY_NAME=mesa
+GAMEMODERUNEXEC="prime-run env vblank_mode=0 LD_BIND_NOW=1"' | sudo tee -a /etc/environment
+
+# Gaming support
+sudo pacman -S steam prismlauncher ttf-liberation lib32-fontconfig \
+    gamemode lib32-gamemode joyutils --noconfirm
+pacmanerror=$((pacmanerror + $?))
 
 sudo tee /usr/local/bin/setpci-latency.sh > /dev/null << 'EOF'
 #!/bin/sh
@@ -485,6 +505,7 @@ setpci -v -s '*:*' latency_timer=20
 setpci -v -s '0:0' latency_timer=0
 setpci -v -d "*:*:04xx" latency_timer=80
 EOF
+
 sudo chmod +x /usr/local/bin/setpci-latency.sh
 
 
@@ -509,6 +530,129 @@ echo '<driconf>
 </driconf>' | sudo tee /etc/drirc
 
 echo "vm.max_map_count = 2147483642" | sudo tee /etc/sysctl.d/80-gamecompatibility.conf
+
+#Gamemode
+sudo usermod -a -G gamemode "$USER"
+
+echo '[general]
+; The reaper thread will check every 5 seconds for exited clients, for config file changes, and for the CPU/iGPU power balance
+reaper_freq=5
+
+; The desired governor is used when entering GameMode instead of "performance"
+desiredgov=performance
+; The default governor is used when leaving GameMode instead of restoring the original value
+;defaultgov=powersave
+
+; The desired platform profile is used when entering GameMode instead of "performance"
+desiredprof=performance
+; The default platform profile is used when leaving GameMode instead of restoring the original value
+;defaultgov=low-power
+
+; The iGPU desired governor is used when the integrated GPU is under heavy load
+igpu_desiredgov=performance
+; Threshold to use to decide when the integrated GPU is under heavy load.
+; This is a ratio of iGPU Watts / CPU Watts which is used to determine when the
+; integraged GPU is under heavy enough load to justify switching to
+; igpu_desiredgov.  Set this to -1 to disable all iGPU checking and always
+; use desiredgov for games.
+igpu_power_threshold=-1
+
+; GameMode can change the scheduler policy to SCHED_ISO on kernels which support it (currently
+; not supported by upstream kernels). Can be set to "auto", "on" or "off". "auto" will enable
+; with 4 or more CPU cores. "on" will always enable. Defaults to "off".
+softrealtime=off
+
+; GameMode can renice game processes. You can put any value between 0 and 20 here, the value
+; will be negated and applied as a nice value (0 means no change). Defaults to 0.
+; To use this feature, the user must be added to the gamemode group (and then rebooted):
+; sudo usermod -aG gamemode $(whoami)
+renice=0
+
+; By default, GameMode adjusts the iopriority of clients to BE/0, you can put any value
+; between 0 and 7 here (with 0 being highest priority), or one of the special values
+; "off" (to disable) or "reset" (to restore Linux default behavior based on CPU priority),
+; currently, only the best-effort class is supported thus you cannot set it here
+ioprio=0
+
+; Sets whether gamemode will inhibit the screensaver when active
+; Defaults to 1
+inhibit_screensaver=1
+
+; Sets whether gamemode will disable split lock mitigation when active
+; Defaults to 1
+disable_splitlock=1
+
+[filter]
+; If "whitelist" entry has a value(s)
+; gamemode will reject anything not in the whitelist
+;whitelist=RiseOfTheTombRaider
+
+; Gamemode will always reject anything in the blacklist
+;blacklist=HalfLife3
+;    glxgears
+
+[gpu]
+; Here Be Dragons!
+; Warning: Use these settings at your own risk
+; Any damage to hardware incurred due to this feature is your responsibility and yours alone
+; It is also highly recommended you try these settings out first manually to find the sweet spots
+
+; Setting this to the keyphrase "accept-responsibility" will allow gamemode to apply GPU optimisations such as overclocks
+;apply_gpu_optimisations=0
+
+; The DRM device number on the system (usually 0), ie. the number in /sys/class/drm/card0/
+;gpu_device=0
+
+; Nvidia specific settings
+; Requires the coolbits extension activated in nvidia-xconfig
+; This corresponds to the desired GPUPowerMizerMode
+; "Adaptive"=0 "Prefer Maximum Performance"=1 and "Auto"=2
+; See NV_CTRL_GPU_POWER_MIZER_MODE and friends in https://github.com/NVIDIA/nvidia-settings/blob/master/src/libXNVCtrl/NVCtrl.h
+;nv_powermizer_mode=1
+
+; These will modify the core and mem clocks of the highest perf state in the Nvidia PowerMizer
+; They are measured as Mhz offsets from the baseline, 0 will reset values to default, -1 or unset will not modify values
+;nv_core_clock_mhz_offset=0
+;nv_mem_clock_mhz_offset=0
+
+; AMD specific settings
+; Requires a relatively up to date AMDGPU kernel module
+; See: https://dri.freedesktop.org/docs/drm/gpu/amdgpu.html#gpu-power-thermal-controls-and-monitoring
+; It is also highly recommended you use lm-sensors (or other available tools) to verify card temperatures
+; This corresponds to power_dpm_force_performance_level, "manual" is not supported for now
+;amd_performance_level=high
+
+[cpu]
+; Parking or Pinning can be enabled with either "yes", "true" or "1" and disabled with "no", "false" or "0".
+; Either can also be set to a specific list of cores to park or pin, comma separated list where "-" denotes
+; a range. E.g "park_cores=1,8-15" would park cores 1 and 8 to 15.
+; The default is uncommented is to disable parking but enable pinning. If either is enabled the code will
+; currently only properly autodetect Ryzen 7900x3d, 7950x3d and Intel CPU:s with E- and P-cores.
+; For Core Parking, user must be added to the gamemode group (not required for Core Pinning):
+; sudo usermod -aG gamemode $(whoami)
+park_cores=no
+pin_cores=yes
+
+[supervisor]
+; This section controls the new gamemode functions gamemode_request_start_for and gamemode_request_end_for
+; The whilelist and blacklist control which supervisor programs are allowed to make the above requests
+;supervisor_whitelist=
+;supervisor_blacklist=
+
+; In case you want to allow a supervisor to take full control of gamemode, this option can be set
+; This will only allow gamemode clients to be registered by using the above functions by a supervisor client
+;require_supervisor=0
+
+[custom]
+; Custom scripts (executed using the shell) when gamemode starts and ends
+start=notify-send "GameMode started"
+    sudo /usr/local/bin/power-detect -g
+
+end=notify-send "GameMode ended"
+    sudo /usr/local/bin/power-detect
+
+; Timeout for scripts (seconds). Scripts will be killed if they do not complete within this time.
+;script_timeout=10' | sudo tee /etc/gamemode.ini
 
 # Looking-glass
 cd /tmp || exit 1
@@ -574,6 +718,10 @@ HibernateKeyIgnoreInhibited=no" | sudo tee /etc/systemd/logind.conf.d/no-hiberna
 # delete useless tools
 sudo rm -rf /archinstall
 sudo rm /usr/local/bin/mkinitcpio-editor
+
+# Update fonts cache
+sudo fc-cache --force
+sudo fc-cache-32 --force
 
 # Security Improve
 sudo passwd --lock root
