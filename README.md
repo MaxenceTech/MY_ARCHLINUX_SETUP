@@ -26,3 +26,8 @@ sudo chmod 600 /var/lib/libvirt/images/*.qcow2
 ### NVIDIA
 
 Les sorties de la carte graphique NVIDIA seront désactivées afin de pouvoir laisser le HDMI dummy dessus.
+
+# To-Do
+
+CPU Undervolt via intel-undervolt
+AppAmor config (optionnal)
