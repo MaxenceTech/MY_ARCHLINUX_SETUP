@@ -15,6 +15,7 @@ set -euo pipefail
 
 # Set French keyboard layout
 loadkeys fr-pc
+mount -o remount,size=2G /run/archiso/cowspace
 
 while :; do
   read -p "The script will erase all yours NVME drives. Do you want to continue ? (y/n) " yn
@@ -259,6 +260,21 @@ genfstab -U /mnt | tee -a  /mnt/etc/fstab
 if [ -d /mnt/data ]; then
 	perl -i.bak -pe 'if (/\/data/ && s/rw,/rw,nofail,/) { $found=1 } END { exit 1 unless $found }' /mnt/etc/fstab
 fi
+
+pacman -S python python-pip --noconfirm
+pip install gdown --break-system-packages
+gdown 1PwHXNjTkH2ivoqJDVbiy_nweyNrDZ0EQ
+
+read -r -p "Password for unzip fonts. Press any key to continue..."
+pacman -S 7zip --noconfirm
+7z x fonts.zip
+rm fonts.zip
+mkdir /mnt/usr/local/share/fonts
+mkdir /mnt/usr/local/share/fonts/WindowsFonts
+cp fonts/* /mnt/usr/local/share/fonts/WindowsFonts/
+
+rm -rf fonts
+
 
 # Copy installation files to target system
 mkdir /mnt/archinstall
