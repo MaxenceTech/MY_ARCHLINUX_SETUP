@@ -20,8 +20,3 @@ cd /archinstall/SCRIPT
 ### NVIDIA
 
 Les sorties de la carte graphique NVIDIA seront désactivées.
-
-# To-Do
-
-- CPU Undervolt via intel-undervolt
-- AppAmor config (optionnal)
