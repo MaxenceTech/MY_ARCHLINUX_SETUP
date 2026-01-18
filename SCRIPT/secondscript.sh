@@ -248,6 +248,13 @@ yayerror=$((yayerror + $?))
 
 echo "msi-ec" | sudo tee /etc/modules-load.d/msi-ec.conf
 
+# mcontrolcenter
+yay -S mcontrolcenter-bin --noconfirm
+yayerror=$((yayerror + $?))
+
+cat /archinstall/CONFIG/MControlCenter.conf > ~/.config/MControlCenter.conf
+sudo cp /usr/share/applications/mcontrolcenter.desktop /etc/xdg/autostart/
+
 #Gnome-randr
 yay -S gnome-randr-rust --noconfirm
 yayerror=$((yayerror + $?))
