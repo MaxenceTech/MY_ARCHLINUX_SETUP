@@ -267,7 +267,7 @@ gdown 1PwHXNjTkH2ivoqJDVbiy_nweyNrDZ0EQ
 
 read -r -p "Password for unzip fonts. Press any key to continue..."
 pacman -S 7zip --noconfirm
-7z x fonts.zip
+7z x fonts.zip -ofonts
 rm fonts.zip
 mkdir /mnt/usr/local/share/fonts
 mkdir /mnt/usr/local/share/fonts/WindowsFonts
