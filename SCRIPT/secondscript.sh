@@ -248,6 +248,13 @@ yayerror=$((yayerror + $?))
 
 echo "msi-ec" | sudo tee /etc/modules-load.d/msi-ec.conf
 
+# mcontrolcenter
+yay -S mcontrolcenter-bin --noconfirm
+yayerror=$((yayerror + $?))
+
+cat /archinstall/CONFIG/MControlCenter.conf > ~/.config/MControlCenter.conf
+sudo cp /usr/share/applications/mcontrolcenter.desktop /etc/xdg/autostart/
+
 #Gnome-randr
 yay -S gnome-randr-rust --noconfirm
 yayerror=$((yayerror + $?))
@@ -260,25 +267,6 @@ sudo cp -r /archinstall/SCRIPT/ACPID/* /etc/acpi
 sudo chmod +x /etc/acpi/handler.sh
 sudo chmod +x /etc/acpi/SCRIPT/*
 sudo systemctl enable --now acpid.service
-
-# QEMU/KVM virtualization
-echo "softdep nvidia pre: vfio-pci" | sudo tee /etc/modprobe.d/30-vfio.conf
-sudo pacman -S qemu-full qemu-img libvirt virt-install virt-manager virt-viewer \
-    edk2-ovmf dnsmasq swtpm guestfs-tools libosinfo --noconfirm
-pacmanerror=$((pacmanerror + $?))
-sudo mkinitcpio-editor -a kvm kvm_intel virtio virtio_blk virtio_pci virtio_net vfio vfio_iommu_type1 vfio_pci
-sudo systemctl enable libvirtd.service
-echo "options kvm_intel nested=1" | sudo tee /etc/modprobe.d/20-kvm-intel.conf
-sudo usermod -aG kvm "$USER"
-sudo usermod -aG libvirt "$USER"
-echo 'export LIBVIRT_DEFAULT_URI="qemu:///system"' >> ~/.bashrc
-echo 'export LIBVIRT_DEFAULT_URI="qemu:///system"' >> ~/.zshrc 
-sudo setfacl -R -b /var/lib/libvirt/images/
-sudo setfacl -R -m "u:${USER}:rwX" /var/lib/libvirt/images/
-sudo setfacl -m "d:u:${USER}:rwx" /var/lib/libvirt/images/
-
-sudo cat /archinstall/CONFIG/createatlasos11vm | sudo tee /usr/local/bin/createatlasos11vm > /dev/null
-sudo chmod +x /usr/local/bin/createatlasos11vm
 
 # Fix keyboard layout
 sudo localectl set-x11-keymap fr
@@ -462,12 +450,11 @@ if [ -d /data ]; then
     sudo chown root:datausers /data/qbittorrent
     sudo chmod 775 /data/qbittorrent
     sudo chmod g+s /data/qbittorrent
-    sudo mkdir /data/libvirt_images
-    sudo setfacl -R -b /data/libvirt_images
-    sudo setfacl -R -m "u:${USER}:rwX" /data/libvirt_images
-    sudo setfacl -m "d:u:${USER}:rwx" /data/libvirt_images
+	sudo mkdir /data/lmstudio_models
+    sudo chown root:datausers /data/lmstudio_models
+    sudo chmod 775 /data/lmstudio_models
+    sudo chmod g+s /data/lmstudio_models
     ln -s /data/qbittorrent ~/SSD-qBittorrent
-    sudo ln -s /data/libvirt_images /var/lib/libvirt/secondssd_images
 fi
 
 
@@ -476,8 +463,7 @@ fi
 yay -S qt5-wayland qt6-wayland libdecor --noconfirm
 yayerror=$((yayerror + $?))
 
-echo 'LIBVIRT_DEFAULT_URI="qemu:///system"
-MOZ_ENABLE_WAYLAND=1
+echo 'MOZ_ENABLE_WAYLAND=1
 QT_QPA_PLATFORM="wayland;xcb"
 CLUTTER_BACKEND=wayland
 SDL_VIDEODRIVER="wayland,x11"
@@ -494,6 +480,9 @@ GAMEMODERUNEXEC="prime-run env vblank_mode=0 LD_BIND_NOW=1"' | sudo tee -a /etc/
 sudo pacman -S steam prismlauncher ttf-liberation lib32-fontconfig \
     gamemode lib32-gamemode joyutils --noconfirm
 pacmanerror=$((pacmanerror + $?))
+
+yay -S protonup-qt --noconfirm
+yayerror=$((yayerror + $?))
 
 sudo tee /usr/local/bin/setpci-latency.sh > /dev/null << 'EOF'
 #!/bin/sh
@@ -651,54 +640,30 @@ end=notify-send "GameMode ended"
 ; Timeout for scripts (seconds). Scripts will be killed if they do not complete within this time.
 ;script_timeout=10' | sudo tee /etc/gamemode.ini
 
-# Looking-glass
-cd /tmp || exit 1
-curl --connect-timeout 10 --retry 10 --retry-delay 10 https://looking-glass.io/artifact/B7/source --output lookinglass.tar.xz
-tar -xf lookinglass.tar.xz
-cd /tmp/looking-glass-B7 || exit 1
-mkdir client/build
-cd client/build || exit 1
-cmake -DENABLE_X11=no -DENABLE_LIBDECOR=ON ../
-sudo make install
-cd /tmp/looking-glass-B7/module/ || exit 1
-sudo dkms install "."
-echo "options kvmfr static_size_mb=64" | sudo tee /etc/modprobe.d/90-kvmfr.conf
-echo "kvmfr" | sudo tee /etc/modules-load.d/kvmfr.conf
-echo "SUBSYSTEM==\"kvmfr\", GROUP=\"kvm\", MODE=\"0660\"" | sudo tee /etc/udev/rules.d/99-kvmfr.rules
-echo 'cgroup_device_acl = [
-    "/dev/null", "/dev/full", "/dev/zero",
-    "/dev/random", "/dev/urandom",
-    "/dev/ptmx", "/dev/kvm",
-    "/dev/userfaultfd", "/dev/kvmfr0"
-]' | sudo tee -a /etc/libvirt/qemu.conf
-echo "user = \"$(whoami)\"" | sudo tee -a /etc/libvirt/qemu.conf
-
-#OBS Plugin Installation
-cd /tmp/looking-glass-B7 || exit 1
-mkdir obs/build
-cd obs/build  || exit 1
-cmake -DUSER_INSTALL=1 ../
-make install
-
-echo '[input]
-captureOnFocus=yes
-escapeKey=KEY_RIGHTSHIFT
-rawMouse=yes
-
-[spice]
-clipboard=yes' | sudo tee /etc/looking-glass-client.ini
-
-# Script Transparent Huge Page
-
-sudo mkdir /etc/libvirt/hooks
-sudo cat /archinstall/CONFIG/qemu | sudo tee /etc/libvirt/hooks/qemu > /dev/null
-sudo chmod +x /etc/libvirt/hooks/qemu
-
 #Fix Upower
 sudo sed -i 's/^CriticalPowerAction=.*$/CriticalPowerAction=PowerOff/' /etc/UPower/UPower.conf
 sudo sed -i 's/^PercentageLow=.*$/PercentageLow=20.0/' /etc/UPower/UPower.conf
 sudo sed -i 's/^PercentageCritical=.*$/PercentageCritical=12.0/' /etc/UPower/UPower.conf
 sudo sed -i 's/^PercentageAction=.*$/PercentageAction=8.0/' /etc/UPower/UPower.conf
+
+# Virtualbox
+sudo pacman -S virtualbox virtualbox-host-modules-arch virtualbox-guest-iso --noconfirm
+pacmanerror=$((pacmanerror + $?))
+yay -S virtualbox-ext-oracle --noconfirm
+yayerror=$((yayerror + $?))
+
+sudo usermod -a -G vboxusers "$USER"
+gsettings set org.gnome.mutter.wayland xwayland-grab-access-rules "['VirtualBox Machine']"
+
+#Docker Setup
+sudo pacman -S docker docker-compose nvidia-container-toolkit ducker --noconfirm
+pacmanerror=$((pacmanerror + $?))
+
+sudo systemctl enable docker.socket --now
+sudo usermod -a -G docker "$USER"
+
+#Local IA
+yay -S lmstudio --noconfirm
 
 # no hibernate
 
