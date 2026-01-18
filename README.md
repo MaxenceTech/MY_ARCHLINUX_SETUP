@@ -17,15 +17,9 @@ cd /archinstall/SCRIPT
 ./secondscript.sh
 ```
 
-### Pour les images libvirt, voici ma recommandation en matière d'autorisation : 
-```
-sudo chown ${USER}:libvirt-qemu /var/lib/libvirt/images/*.qcow2
-sudo chmod 600 /var/lib/libvirt/images/*.qcow2
-```
-
 ### NVIDIA
 
-Les sorties de la carte graphique NVIDIA seront désactivées afin de pouvoir laisser le HDMI dummy dessus.
+Les sorties de la carte graphique NVIDIA seront désactivées.
 
 # To-Do
 
