@@ -632,6 +632,15 @@ sudo sed -i 's/^PercentageLow=.*$/PercentageLow=20.0/' /etc/UPower/UPower.conf
 sudo sed -i 's/^PercentageCritical=.*$/PercentageCritical=12.0/' /etc/UPower/UPower.conf
 sudo sed -i 's/^PercentageAction=.*$/PercentageAction=8.0/' /etc/UPower/UPower.conf
 
+# Virtualbox
+sudo pacman -S virtualbox virtualbox-host-modules-arch virtualbox-guest-iso --noconfirm
+pacmanerror=$((pacmanerror + $?))
+yay -S virtualbox-ext-oracle --noconfirm
+yayerror=$((yayerror + $?))
+
+sudo usermod -a -G vboxusers "$USER"
+gsettings set org.gnome.mutter.wayland xwayland-grab-access-rules "['VirtualBox Machine']"
+
 # no hibernate
 
 sudo mkdir /etc/systemd/sleep.conf.d
