@@ -450,6 +450,10 @@ if [ -d /data ]; then
     sudo chown root:datausers /data/qbittorrent
     sudo chmod 775 /data/qbittorrent
     sudo chmod g+s /data/qbittorrent
+	sudo mkdir /data/lmstudio_models
+    sudo chown root:datausers /data/lmstudio_models
+    sudo chmod 775 /data/lmstudio_models
+    sudo chmod g+s /data/lmstudio_models
     ln -s /data/qbittorrent ~/SSD-qBittorrent
 fi
 
