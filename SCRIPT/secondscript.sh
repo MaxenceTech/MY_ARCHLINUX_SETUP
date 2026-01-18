@@ -652,6 +652,9 @@ pacmanerror=$((pacmanerror + $?))
 yay -S virtualbox-ext-oracle --noconfirm
 yayerror=$((yayerror + $?))
 
+sudo usermod -a -G vboxusers "$USER"
+gsettings set org.gnome.mutter.wayland xwayland-grab-access-rules "['VirtualBox Machine']"
+
 #Docker Setup
 sudo pacman -S docker docker-compose nvidia-container-toolkit ducker --noconfirm
 pacmanerror=$((pacmanerror + $?))
@@ -661,9 +664,6 @@ sudo usermod -a -G docker "$USER"
 
 #Local IA
 yay -S lmstudio --noconfirm
-
-sudo usermod -a -G vboxusers "$USER"
-gsettings set org.gnome.mutter.wayland xwayland-grab-access-rules "['VirtualBox Machine']"
 
 # no hibernate
 
