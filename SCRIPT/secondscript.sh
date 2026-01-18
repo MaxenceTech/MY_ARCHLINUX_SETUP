@@ -477,6 +477,9 @@ sudo pacman -S steam prismlauncher ttf-liberation lib32-fontconfig \
     gamemode lib32-gamemode joyutils --noconfirm
 pacmanerror=$((pacmanerror + $?))
 
+yay -S protonup-qt --noconfirm
+yayerror=$((yayerror + $?))
+
 sudo tee /usr/local/bin/setpci-latency.sh > /dev/null << 'EOF'
 #!/bin/sh
 # Set PCI latency timers
