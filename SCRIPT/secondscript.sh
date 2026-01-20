@@ -324,10 +324,6 @@ echo 'export PATH="$PATH:/home/mux/.local/bin"' >> ~/.zshrc
 sudo pacman -S mtpfs gvfs-mtp gvfs-gphoto2 libmtp --noconfirm
 pacmanerror=$((pacmanerror + $?))
 
-# Android Studio
-yay -S android-studio --noconfirm
-yayerror=$((yayerror + $?))
-
 # Disable coredump
 
 sudo mkdir /etc/systemd/coredump.conf.d
