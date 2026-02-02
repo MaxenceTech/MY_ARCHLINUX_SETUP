@@ -306,7 +306,7 @@ sudo systemctl enable fstrim.timer
 
 # Essential applications
 sudo pacman -S gparted speech-dispatcher libreoffice-still-fr file-roller zip unzip p7zip ttf-dejavu kdenlive obs-studio cdrkit seahorse \
-    unrar python-pip tk gimp inkscape bolt hunspell-fr noto-fonts-emoji blender ttf-fira-code qbittorrent --noconfirm
+    unrar python-pip tk gimp inkscape bolt hunspell-fr noto-fonts-emoji blender ttf-fira-code qbittorrent gst-plugin-va --noconfirm
 pacmanerror=$((pacmanerror + $?))
 yay -S vscodium-bin --noconfirm
 yayerror=$((yayerror + $?))
