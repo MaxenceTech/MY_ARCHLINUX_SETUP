@@ -277,7 +277,7 @@ pacmanerror=$((pacmanerror + $?))
 
 # Pare-feu
 
-sudo pacman -S firewalld --noconfirm
+sudo pacman -S firewalld firewall-config --noconfirm
 pacmanerror=$((pacmanerror + $?))
 sudo systemctl enable --now firewalld.service
 sleep 5
