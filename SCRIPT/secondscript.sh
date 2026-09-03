@@ -11,6 +11,17 @@
 #==============================================================================
 
 #==============================================================================
+# Check if secureboot is enabled
+#==============================================================================
+
+if [ $(sudo sbctl status | grep "Setup Mode" | grep -c "Disabled") -gt 0 ] && [ $(sudo sbctl status | grep "Secure Boot" | grep -c "Enabled") -gt 0 ]; then
+	echo "Secure boot enabled and not in setup mode. Pass !"
+else
+	echo "Secure boot not enabled or in setup mode. Aborting !"
+	exit 1
+fi
+
+#==============================================================================
 # NETWORK CONNECTIVITY VERIFICATION
 #==============================================================================
 
@@ -38,17 +49,6 @@ do
         echo -e "\n\n\nConnected but no network !\n\n\n"
     fi
 done
-
-#==============================================================================
-# Check if secureboot is enabled
-#==============================================================================
-
-if [ $(sudo sbctl status | grep "Setup Mode" | grep -c "Disabled") -gt 0 ] && [ $(sudo sbctl status | grep "Secure Boot" | grep -c "Enabled") -gt 0 ]; then
-	echo "Secure boot enabled and not in setup mode. Pass !"
-else
-	echo "Secure boot not enabled or in setup mode. Aborting !"
-	exit 1
-fi
 
 # Exit on any error, undefined variables, and pipe failures
 set -euo pipefail
