@@ -15,7 +15,6 @@ set -euo pipefail
 
 # Set French keyboard layout
 loadkeys fr-pc
-mount -o remount,size=2G /run/archiso/cowspace
 
 while :; do
   read -p "The script will erase all yours NVME drives. Do you want to continue ? (y/n) " yn
@@ -94,7 +93,7 @@ sleep 20
 # DISK PARTITIONING AND FILESYSTEM SETUP
 #==============================================================================
 
-lsblk -d -o NAME,MODEL,SIZE,TYPE | grep nvme
+lsblk -d -o NAME,MODEL,SIZE,TYPE | grep sd
 
 # Discover NVMe disks
 mapfile -t nvme_disks < <(ls /dev/nvme*n1 2>/dev/null)
@@ -133,75 +132,16 @@ elif [ "$nvme_count" -eq 1 ]; then
     # Mount filesystems
     mount /dev/mapper/root /mnt
     mount --mkdir -t vfat -o fmask=0077,dmask=0077,nodev,nosuid,noexec "${disk1}p1" /mnt/efi
-	mkswap -U clear --label swapfile --size 16G --file /mnt/swapfile
-    swapon /mnt/swapfile
-
-elif [ "$nvme_count" -eq 2 ]; then
-    # Dual NVMe disk configuration
-    echo "Two NVMe disks detected:"
-    for i in "${!nvme_disks[@]}"; do
-        echo "$((i+1)). ${nvme_disks[i]}"
-    done
-    
-    # User disk selection with validation
-    while true; do
-        read -r -p "Which disk do you want to select as the primary disk? (1 or 2): " choice
-        case $choice in
-            1)
-                disk1="${nvme_disks[0]}"
-                disk2="${nvme_disks[1]}"
-                break
-                ;;
-            2)
-                disk1="${nvme_disks[1]}"
-                disk2="${nvme_disks[0]}"
-                break
-                ;;
-            *)
-                echo "Invalid choice. Please enter 1 or 2."
-                ;;
-        esac
-    done
-    
-    echo "Primary disk (disk1): $disk1"
-    echo "Secondary disk (disk2): $disk2"
-
-    # Clear partition tables
-    sgdisk -Z "$disk1"
-
-    # Partition primary disk: EFI + Root
-    sgdisk --set-alignment=2048 --align-end -n 1:0:+2G -t 1:ef00 "$disk1"       # EFI partition
-    sgdisk --set-alignment=2048 --align-end -n 2:0:0 -t 2:8304 "$disk1"        # Root partition
-
-	cryptsetup luksFormat -q \
-	    --type=luks2 \
-	    --cipher=aes-xts-plain64 \
-	    --key-size=512 \
-	    --pbkdf=argon2id \
-	    --iter-time=4000 \
-		--verify-passphrase \
-	    --label=encrypted_root \
-	    --pbkdf-memory=2097152 \
-	    --pbkdf-parallel=4 \
-	    "${disk1}p2"
-	cryptsetup --perf-no_read_workqueue --perf-no_write_workqueue --allow-discards --persistent open "${disk1}p2" root
-	
-    mkfs.fat -F32 "${disk1}p1"
-    mkfs.ext4 /dev/mapper/root
-
-    # Mount all filesystems
-    mount /dev/mapper/root /mnt
-    mount --mkdir -t vfat -o fmask=0077,dmask=0077,nodev,nosuid,noexec "${disk1}p1" /mnt/efi
-	mkswap -U clear --label swapfile --size 16G --file /mnt/swapfile
+	mkswap -U clear --label swapfile --size 24G --file /mnt/swapfile
     swapon /mnt/swapfile
 
 else
     # Unsupported disk configuration
-    echo "More than 2 NVMe disks detected. Found $nvme_count disks:"
+    echo "More than 1 NVMe disks detected. Found $nvme_count disks:"
     for disk in "${nvme_disks[@]}"; do
         echo "  $disk"
     done
-    echo "This script only handles up to 2 NVMe disks. Exit"
+    echo "This script only handles up to 1 NVMe disks. Exit"
     exit 1
 fi
 
@@ -223,36 +163,10 @@ read -r -p "Press any key to continue..."
 #==============================================================================
 if [ "$nvme_count" -eq 2 ]; then
     sgdisk -Z "$disk2"
-	dd bs=512 count=4 if=/dev/random iflag=fullblock | install -m 0600 /dev/stdin /mnt/etc/cryptsetup-keys.d/secondssd-keyfile.key
-	# Partition secondary disk: Swap + Data
-    sgdisk --set-alignment=2048 --align-end -n 1:0:0 -t 1:8300 "$disk2"        # Data partition
-
-	cryptsetup luksFormat -q \
-	    --type=luks2 \
-	    --cipher=aes-xts-plain64 \
-	    --key-size=512 \
-	    --pbkdf=argon2id \
-	    --iter-time=4000 \
-	    --label=encrypted_secondssd \
-	    --pbkdf-memory=2097152 \
-	    --pbkdf-parallel=4 \
-		--key-file=/mnt/etc/cryptsetup-keys.d/secondssd-keyfile.key  \
-		--keyfile-size=2048 \
-	    "${disk2}p1"
-    cryptsetup --perf-no_read_workqueue --perf-no_write_workqueue --allow-discards --persistent open "${disk2}p1" SECOND_SSD --key-file=/mnt/etc/cryptsetup-keys.d/secondssd-keyfile.key
-
-	data_luks_dev=$(LC_ALL=C cryptsetup status SECOND_SSD | awk -F': ' '/device:/ {print $2}')
-	# Trim leading
-	data_luks_dev="${data_luks_dev#"${data_luks_dev%%[![:space:]]*}"}"
-	# Trim trailing
-	data_luks_dev="${data_luks_dev%"${data_luks_dev##*[![:space:]]}"}"
-
-	DATAPARTUUIDGREP=$(cryptsetup luksUUID -- "$data_luks_dev")
+    sgdisk --set-alignment=2048 --align-end -n 1:0:0 -t 1:8300 "$disk2"
 	
-    mkfs.ext4 /dev/mapper/SECOND_SSD
-	mount --mkdir -o nodev,nosuid /dev/mapper/SECOND_SSD /mnt/data
-
-	echo "SECOND_SSD UUID=$DATAPARTUUIDGREP /etc/cryptsetup-keys.d/secondssd-keyfile.key luks,discard,no-read-workqueue,no-write-workqueue" | tee -a /mnt/etc/crypttab
+    mkfs.ext4 "$disk2"1
+	mount --mkdir -o nodev,nosuid "$disk2"1 /mnt/data
 fi
 # Generate filesystem table
 genfstab -U /mnt | tee -a  /mnt/etc/fstab
@@ -260,20 +174,6 @@ genfstab -U /mnt | tee -a  /mnt/etc/fstab
 if [ -d /mnt/data ]; then
 	perl -i.bak -pe 'if (/\/data/ && s/rw,/rw,nofail,/) { $found=1 } END { exit 1 unless $found }' /mnt/etc/fstab
 fi
-
-pacman -S python python-pip --noconfirm
-pip install gdown --break-system-packages
-gdown 1PwHXNjTkH2ivoqJDVbiy_nweyNrDZ0EQ
-
-read -r -p "Password for unzip fonts. Press any key to continue..."
-pacman -S 7zip --noconfirm
-7z x fonts.zip -ofonts
-rm fonts.zip
-mkdir /mnt/usr/local/share/fonts
-mkdir /mnt/usr/local/share/fonts/WindowsFonts
-cp fonts/* /mnt/usr/local/share/fonts/WindowsFonts/
-
-rm -rf fonts
 
 
 # Copy installation files to target system

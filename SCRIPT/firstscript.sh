@@ -115,8 +115,6 @@ sed -i 's/^#\s*\(%wheel\s*ALL=(ALL:ALL)\s*ALL\)/\1/' /etc/sudoers
 # Fix ACPI error with custom SSDT
 echo "Configuring ACPI override..."
 mkdir -p /etc/initcpio/acpi_override
-cp /archinstall/CONFIG/ssdt1.aml /etc/initcpio/acpi_override
-cp /archinstall/CONFIG/ssdt12.aml /etc/initcpio/acpi_override
 
 #==============================================================================
 # KERNEL CONFIGURATION
@@ -136,8 +134,8 @@ sed -i "$((ligne-1)) a HOOKS=(systemd autodetect microcode modconf keyboard sd-v
 # Configure system performance parameters
 echo "Applying system performance tweaks..."
 echo "vm.swappiness=10
-vm.dirty_bytes = 4294967296
-vm.dirty_background_bytes = 2147483648
+vm.dirty_background_ratio = 5
+vm.dirty_ratio = 10
 vm.vfs_cache_pressure=50" | tee /etc/sysctl.d/99-ramtweaks.conf
 
 # Blacklist Watchdogs module
@@ -149,7 +147,7 @@ echo "blacklist iTCO_wdt" | tee /etc/modprobe.d/blacklist_intelwatchdog.conf
 
 # Configure custom kernel modules and microcode
 echo "Configuring bootloader..."
-mkinitcpio-editor -a xe lz4
+mkinitcpio-editor -a i915 lz4
 pacman -S efibootmgr intel-ucode --noconfirm
 pacmanerror=$((pacmanerror + $?))
 
@@ -164,7 +162,7 @@ PARTUUIDGREP=$(cryptsetup luksUUID -- "$luks_dev")
 
 # Create boot entries for different configurations
 
-echo "rd.luks.options=discard,no-read-workqueue,no-write-workqueue rd.luks.name=$PARTUUIDGREP=root root=/dev/mapper/root rw quiet mitigations=auto nowatchdog tsc=reliable clocksource=tsc vt.global_cursor_default=0 zswap.enabled=1 zswap.shrinker_enabled=1 zswap.compressor=lz4 zswap.max_pool_percent=20 zswap.zpool=zsmalloc video=HDMI-A-1:d video=DP-1:d video=DP-2:d" | tee /etc/kernel/arch_cmdline
+echo "rd.luks.options=discard,no-read-workqueue,no-write-workqueue rd.luks.name=$PARTUUIDGREP=root root=/dev/mapper/root rw quiet mitigations=auto nowatchdog tsc=reliable clocksource=tsc vt.global_cursor_default=0 zswap.enabled=1 zswap.shrinker_enabled=1 zswap.compressor=lz4 zswap.max_pool_percent=25 zswap.zpool=zsmalloc" | tee /etc/kernel/arch_cmdline
 echo 'ALL_config="/etc/mkinitcpio.conf"
 ALL_kver="/boot/vmlinuz-linux"
 
@@ -174,7 +172,6 @@ PRESETS=('default' 'fallback')
 #default_image="/boot/initramfs-linux.img"
 default_uki="/efi/EFI/Linux/default-linux.efi"
 default_options="--cmdline /etc/kernel/arch_cmdline"
-
 
 #fallback_config="/etc/mkinitcpio.conf"
 #fallback_image="/boot/initramfs-linux.img"

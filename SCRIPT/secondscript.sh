@@ -135,68 +135,15 @@ pacmanerror=$((pacmanerror + $?))
 
 # Install Intel graphics drivers
 echo "Installing Intel graphics drivers..."
-sudo pacman -S mesa lib32-mesa mesa-utils intel-media-driver libva-utils libvpl vpl-gpu-rt \
-    vulkan-icd-loader lib32-vulkan-icd-loader vulkan-intel lib32-vulkan-intel \
-    vulkan-mesa-implicit-layers lib32-vulkan-mesa-implicit-layers vulkan-tools --noconfirm
+sudo pacman -S mesa lib32-mesa mesa-utils intel-media-driver libva-utils libvpl intel-media-sdk \
+    vulkan-icd-loader lib32-vulkan-icd-loader vulkan-intel lib32-vulkan-intel vulkan-tools --noconfirm
 pacmanerror=$((pacmanerror + $?))
-
-# Install NVIDIA graphics drivers
-echo "Installing NVIDIA graphics drivers..."
-sudo pacman -S nvidia-open nvidia-utils lib32-nvidia-utils nvidia-settings libxnvctrl --noconfirm
-pacmanerror=$((pacmanerror + $?))
-
-echo '# Enable runtime PM for NVIDIA VGA/3D controller devices on adding device
-ACTION=="add", SUBSYSTEM=="pci", ATTR{vendor}=="0x10de", ATTR{class}=="0x030000", TEST=="power/control", ATTR{power/control}="auto"
-ACTION=="add", SUBSYSTEM=="pci", ATTR{vendor}=="0x10de", ATTR{class}=="0x030200", TEST=="power/control", ATTR{power/control}="auto"
-
-# Enable runtime PM for NVIDIA VGA/3D controller devices on driver bind
-ACTION=="bind", SUBSYSTEM=="pci", ATTR{vendor}=="0x10de", ATTR{class}=="0x030000", TEST=="power/control", ATTR{power/control}="auto"
-ACTION=="bind", SUBSYSTEM=="pci", ATTR{vendor}=="0x10de", ATTR{class}=="0x030200", TEST=="power/control", ATTR{power/control}="auto"
-
-# Disable runtime PM for NVIDIA VGA/3D controller devices on driver unbind
-ACTION=="unbind", SUBSYSTEM=="pci", ATTR{vendor}=="0x10de", ATTR{class}=="0x030000", TEST=="power/control", ATTR{power/control}="on"
-ACTION=="unbind", SUBSYSTEM=="pci", ATTR{vendor}=="0x10de", ATTR{class}=="0x030200", TEST=="power/control", ATTR{power/control}="on"' | sudo tee /etc/udev/rules.d/90-prime-powermanagement.rules
-
-echo 'options nvidia "NVreg_DynamicPowerManagement=0x03" NVreg_UsePageAttributeTable=1' | sudo tee /etc/modprobe.d/80-nvidia.conf
-
-sudo mkinitcpio-editor -a nvidia nvidia_modeset nvidia_uvm nvidia_drm
-
-sudo tee /etc/pacman.d/hooks/nvidia.hook << 'EOF'
-[Trigger]
-Operation=Install
-Operation=Upgrade
-Operation=Remove
-Type=Package
-# You can remove package(s) that don't apply to your config, e.g. if you only use nvidia-open you can remove nvidia-lts as a Target
-Target=nvidia
-Target=nvidia-open
-# If running a different kernel, modify below to match
-Target=linux
-
-[Action]
-Description=Updating NVIDIA module in initcpio
-Depends=mkinitcpio
-When=PostTransaction
-NeedsTargets
-Exec=/bin/sh -c 'while read -r trg; do case $trg in linux*) exit 0; esac; done; /usr/bin/mkinitcpio -P'
-EOF
-
-sudo systemctl enable nvidia-powerd.service
 
 # Add OpenCL Support
 
-sudo pacman -S clinfo opencl-nvidia lib32-opencl-nvidia cuda intel-compute-runtime ocl-icd opencl-headers --noconfirm
-pacmanerror=$((pacmanerror + $?))
-yay -S  ncurses5-compat-libs --noconfirm
-yayerror=$((yayerror + $?))
-
-echo "/usr/lib" | sudo tee /etc/ld.so.conf.d/00-usrlib.conf
-
-# Add custom prime-run command (with opencl support redirection)
-
-echo '#!/bin/bash
-exec env OCL_ICD_FILENAMES=nvidia.icd:intel.icd __NV_PRIME_RENDER_OFFLOAD=1 __EGL_VENDOR_LIBRARY_FILENAMES=/usr/share/glvnd/egl_vendor.d/10_nvidia.json MESA_VK_DEVICE_SELECT=10de:27a0 __GLX_VENDOR_LIBRARY_NAME=nvidia __VK_LAYER_NV_optimus=NVIDIA_only "$@"' | sudo tee /usr/local/bin/prime-run
-sudo chmod 755 /usr/local/bin/prime-run
+#sudo pacman -S clinfo intel-compute-runtime ocl-icd opencl-headers --noconfirm
+#pacmanerror=$((pacmanerror + $?))
+#echo "/usr/lib" | sudo tee /etc/ld.so.conf.d/00-usrlib.conf
 
 # Dbus
 
@@ -228,7 +175,7 @@ pacmanerror=$((pacmanerror + $?))
 
 sudo systemctl enable avahi-daemon.service
 
-sudo sed -i 's/resolve/mdns_minimal [NOTFOUND=return] resolve/g' /etc/nsswitch.conf
+sudo sed -i '/^hosts:/ { /mdns/! s/\bresolve\b/mdns_minimal [NOTFOUND=return] resolve/ }' /etc/nsswitch.conf
 
 sudo systemctl enable cups.socket
 
@@ -241,23 +188,6 @@ yay -S reversal-icon-theme-git --noconfirm
 yayerror=$((yayerror + $?))
 
 sudo systemctl enable gdm.service
-
-#MSI-EC
-yay -S msi-ec-dkms-git --noconfirm
-yayerror=$((yayerror + $?))
-
-echo "msi-ec" | sudo tee /etc/modules-load.d/msi-ec.conf
-
-# mcontrolcenter
-yay -S mcontrolcenter-bin --noconfirm
-yayerror=$((yayerror + $?))
-
-cat /archinstall/CONFIG/MControlCenter.conf > ~/.config/MControlCenter.conf
-sudo cp /usr/share/applications/mcontrolcenter.desktop /etc/xdg/autostart/
-
-#Gnome-randr
-yay -S gnome-randr-rust --noconfirm
-yayerror=$((yayerror + $?))
 
 
 #acpid
@@ -305,8 +235,8 @@ sudo systemctl enable fstrim.timer
 
 
 # Essential applications
-sudo pacman -S gparted speech-dispatcher libreoffice-still-fr file-roller zip unzip p7zip ttf-dejavu kdenlive obs-studio cdrkit seahorse \
-    unrar python-pip tk gimp inkscape bolt hunspell-fr noto-fonts-emoji blender ttf-fira-code qbittorrent gst-plugin-va --noconfirm
+sudo pacman -S gparted speech-dispatcher libreoffice-still-fr file-roller zip unzip p7zip ttf-dejavu kdenlive obs-studio seahorse \
+    unrar python-pip tk gimp inkscape bolt hunspell-fr noto-fonts-emoji ttf-fira-code qbittorrent gst-plugin-va --noconfirm
 pacmanerror=$((pacmanerror + $?))
 yay -S vscodium-bin --noconfirm
 yayerror=$((yayerror + $?))
@@ -398,46 +328,6 @@ Exec=sudo /usr/local/bin/power-detect
 Terminal=false
 Type=Application" | sudo tee /etc/xdg/autostart/power-detect.desktop
 
-# Nvidia overclock on boot
-
-yay -S python-nvidia-ml-py  --noconfirm
-yayerror=$((yayerror + $?))
-
-
-echo '#!/usr/bin/env python
-
-from pynvml import *
-
-nvmlInit()
-
-# This sets the GPU to adjust - if this gives you errors or you have multiple GPUs, set to 1 or try other values
-myGPU = nvmlDeviceGetHandleByIndex(0)
-
-nvmlDeviceSetGpuLockedClocks(myGPU, 210, 2640)
-
-# The GPU clock offset value should replace "000" in the line below.
-nvmlDeviceSetGpcClkVfOffset(myGPU, 220)
-
-# The memory clock offset should be **multiplied by 2** to replace the "000" below
-# For example, an offset of 500 means inserting a value of 1000 in the next line
-nvmlDeviceSetMemClkVfOffset(myGPU, 1200)
-' | sudo tee /usr/local/bin/nvidia-oc.py
-sudo chmod +x /usr/local/bin/nvidia-oc.py
-
-echo "[Unit]
-Description=Set up Nvidia settings
-Wants=basic.target
-
-[Service]
-Type=oneshot
-ExecStart=/usr/local/bin/nvidia-oc.py
-
-
-[Install]
-WantedBy=network.target" | sudo tee /etc/systemd/system/nvidia-oc.service
-
-sudo systemctl enable nvidia-oc.service 
-
 # /data permission
 if [ -d /data ]; then
     sudo groupadd datausers
@@ -449,10 +339,6 @@ if [ -d /data ]; then
     sudo chown root:datausers /data/qbittorrent
     sudo chmod 775 /data/qbittorrent
     sudo chmod g+s /data/qbittorrent
-	sudo mkdir /data/lmstudio_models
-    sudo chown root:datausers /data/lmstudio_models
-    sudo chmod 775 /data/lmstudio_models
-    sudo chmod g+s /data/lmstudio_models
     ln -s /data/qbittorrent ~/SSD-qBittorrent
 fi
 
@@ -463,22 +349,22 @@ yay -S qt5-wayland qt6-wayland libdecor --noconfirm
 yayerror=$((yayerror + $?))
 
 echo 'MOZ_ENABLE_WAYLAND=1
+ELM_DISPLAY=wl
+ELECTRON_OZONE_PLATFORM_HINT=auto
 QT_QPA_PLATFORM="wayland;xcb"
 CLUTTER_BACKEND=wayland
 SDL_VIDEODRIVER="wayland,x11"
 XDG_SESSION_TYPE=wayland
-MESA_VK_DEVICE_SELECT=8086:a78b
-GSK_RENDERER=ngl
 SUDO_EDITOR=nano
-OCL_ICD_FILENAMES=intel.icd:nvidia.icd
-__EGL_VENDOR_LIBRARY_FILENAMES=/usr/share/glvnd/egl_vendor.d/50_mesa.json
-__GLX_VENDOR_LIBRARY_NAME=mesa
-GAMEMODERUNEXEC="prime-run env vblank_mode=0 LD_BIND_NOW=1"' | sudo tee -a /etc/environment
+OCL_ICD_FILENAMES=intel.icd' | sudo tee -a /etc/environment
 
 # Gaming support
-sudo pacman -S steam prismlauncher ttf-liberation lib32-fontconfig \
+sudo pacman -S steam ttf-liberation lib32-fontconfig \
     gamemode lib32-gamemode joyutils --noconfirm
 pacmanerror=$((pacmanerror + $?))
+
+yay -S ttf-ms-win11-auto --noconfirm
+yayerror=$((yayerror + $?))
 
 yay -S protonup-qt --noconfirm
 yayerror=$((yayerror + $?))
@@ -616,7 +502,7 @@ disable_splitlock=1
 ; For Core Parking, user must be added to the gamemode group (not required for Core Pinning):
 ; sudo usermod -aG gamemode $(whoami)
 park_cores=no
-pin_cores=yes
+pin_cores=no
 
 [supervisor]
 ; This section controls the new gamemode functions gamemode_request_start_for and gamemode_request_end_for
@@ -655,14 +541,11 @@ sudo usermod -a -G vboxusers "$USER"
 gsettings set org.gnome.mutter.wayland xwayland-grab-access-rules "['VirtualBox Machine']"
 
 #Docker Setup
-sudo pacman -S docker docker-compose nvidia-container-toolkit ducker --noconfirm
+sudo pacman -S docker docker-compose ducker --noconfirm
 pacmanerror=$((pacmanerror + $?))
 
 sudo systemctl enable docker.socket --now
 sudo usermod -a -G docker "$USER"
-
-#Local IA
-yay -S lmstudio --noconfirm
 
 # no hibernate
 
