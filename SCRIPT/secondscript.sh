@@ -189,6 +189,18 @@ yayerror=$((yayerror + $?))
 
 sudo systemctl enable gdm.service
 
+# Remap Keys
+
+sudo pacman -S keyd --noconfirm
+pacmanerror=$((pacmanerror + $?))
+
+echo "[ids]
+0001:0001
+
+[main]
+rightcontrol = 102nd" | sudo tee /etc/keyd/default.conf
+
+sudo systemctl enable --now keyd
 
 #acpid
 sudo pacman -S acpid --noconfirm
