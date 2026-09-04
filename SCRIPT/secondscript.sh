@@ -358,8 +358,8 @@ sudo pacman -S steam ttf-liberation lib32-fontconfig \
     gamemode lib32-gamemode joyutils --noconfirm
 pacmanerror=$((pacmanerror + $?))
 
-yay -S ttf-ms-win11-auto --noconfirm
-yayerror=$((yayerror + $?))
+#yay -S ttf-ms-win11-auto --noconfirm
+#yayerror=$((yayerror + $?))
 
 yay -S protonup-qt --noconfirm
 yayerror=$((yayerror + $?))
@@ -532,12 +532,16 @@ pacmanerror=$((pacmanerror + $?))
 yay -S virtualbox-ext-oracle --noconfirm
 yayerror=$((yayerror + $?))
 
+sleep 2
+
 sudo usermod -a -G vboxusers "$USER"
 gsettings set org.gnome.mutter.wayland xwayland-grab-access-rules "['VirtualBox Machine']"
 
 #Docker Setup
 sudo pacman -S docker docker-compose ducker --noconfirm
 pacmanerror=$((pacmanerror + $?))
+
+sleep 2
 
 sudo systemctl enable docker.socket --now
 sudo usermod -a -G docker "$USER"
@@ -557,6 +561,8 @@ HibernateKeyIgnoreInhibited=no" | sudo tee /etc/systemd/logind.conf.d/no-hiberna
 # delete useless tools
 sudo rm -rf /archinstall
 sudo rm /usr/local/bin/mkinitcpio-editor
+
+sleep 5
 
 # Update fonts cache
 sudo fc-cache --force
