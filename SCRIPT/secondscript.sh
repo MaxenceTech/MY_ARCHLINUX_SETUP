@@ -527,7 +527,7 @@ sudo sed -i 's/^PercentageCritical=.*$/PercentageCritical=12.0/' /etc/UPower/UPo
 sudo sed -i 's/^PercentageAction=.*$/PercentageAction=8.0/' /etc/UPower/UPower.conf
 
 # Virtualbox
-sudo pacman -S virtualbox virtualbox-host-modules-arch virtualbox-guest-iso --noconfirm
+sudo pacman -S virtualbox virtualbox-host-dkms virtualbox-guest-iso --noconfirm
 pacmanerror=$((pacmanerror + $?))
 yay -S virtualbox-ext-oracle --noconfirm
 yayerror=$((yayerror + $?))
