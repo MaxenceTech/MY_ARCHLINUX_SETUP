@@ -532,19 +532,23 @@ pacmanerror=$((pacmanerror + $?))
 yay -S virtualbox-ext-oracle --noconfirm
 yayerror=$((yayerror + $?))
 
-sleep 2
+read -r -p "Press any key to continue..."
 
 sudo usermod -a -G vboxusers "$USER"
 gsettings set org.gnome.mutter.wayland xwayland-grab-access-rules "['VirtualBox Machine']"
+
+read -r -p "Press any key to continue..."
 
 #Docker Setup
 sudo pacman -S docker docker-compose ducker --noconfirm
 pacmanerror=$((pacmanerror + $?))
 
-sleep 2
+read -r -p "Press any key to continue..."
 
 sudo systemctl enable docker.socket --now
 sudo usermod -a -G docker "$USER"
+
+read -r -p "Press any key to continue..."
 
 # no hibernate
 
@@ -567,6 +571,8 @@ sleep 5
 # Update fonts cache
 sudo fc-cache --force
 sudo fc-cache-32 --force
+
+read -r -p "Press any key to continue..."
 
 # Security Improve
 sudo passwd --lock root
